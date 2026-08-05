@@ -2,8 +2,8 @@
  * Hello Tool - Minimal custom tool example
  */
 
-import { Type } from "@earendil-works/pi-ai";
-import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "pi-stable-ai";
+import { defineTool, type ExtensionAPI } from "pi-stable";
 
 const helloTool = defineTool({
 	name: "hello",

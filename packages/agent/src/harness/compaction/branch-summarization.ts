@@ -1,4 +1,4 @@
-import { contentText, type Model, type Models, type RetryCallbacks, type RetryPolicy } from "@earendil-works/pi-ai";
+import { contentText, type Model, type Models, type RetryCallbacks, type RetryPolicy } from "pi-stable-ai";
 
 import type { AgentMessage } from "../../types.ts";
 import {

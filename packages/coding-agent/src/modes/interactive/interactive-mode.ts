@@ -7,9 +7,9 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import type { AuthEvent, AuthPrompt } from "@earendil-works/pi-ai";
-import type { AssistantMessage, ImageContent, Message, Model } from "@earendil-works/pi-ai/compat";
+import type { AgentMessage } from "pi-stable-agent-core";
+import type { AuthEvent, AuthPrompt } from "pi-stable-ai";
+import type { AssistantMessage, ImageContent, Message, Model } from "pi-stable-ai/compat";
 import type {
 	AutocompleteItem,
 	AutocompleteProvider,
@@ -20,7 +20,7 @@ import type {
 	OverlayHandle,
 	OverlayOptions,
 	SlashCommand,
-} from "@earendil-works/pi-tui";
+} from "pi-stable-tui";
 import {
 	CombinedAutocompleteProvider,
 	type Component,
@@ -37,7 +37,7 @@ import {
 	TruncatedText,
 	TUI,
 	visibleWidth,
-} from "@earendil-works/pi-tui";
+} from "pi-stable-tui";
 import chalk from "chalk";
 import { spawn, spawnSync } from "child_process";
 import {
@@ -3373,7 +3373,10 @@ export class InteractiveMode {
 			this.chatContainer.addChild(new Spacer(1));
 			this.chatContainer.addChild(
 				new Text(
-					theme.fg("dim", `… ${hiddenCount} earlier message${hiddenCount === 1 ? "" : "s"} not shown (kept in session)`),
+					theme.fg(
+						"dim",
+						`… ${hiddenCount} earlier message${hiddenCount === 1 ? "" : "s"} not shown (kept in session)`,
+					),
 					1,
 					0,
 				),

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { contentText } from "@earendil-works/pi-ai";
+import { contentText } from "pi-stable-ai";
 import {
 	type AgentSession,
 	type CreateAgentSessionOptions,
@@ -11,7 +11,7 @@ import {
 	ModelRuntime,
 	SessionManager,
 	SettingsManager,
-} from "@earendil-works/pi-coding-agent";
+} from "pi-stable";
 import {
 	createHarness,
 	type Harness,

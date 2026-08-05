@@ -1,8 +1,9 @@
 name: Publish pi-stable
 
+# Publishes all 5 pi-stable-* packages in dependency order via scripts/publish.mjs.
 # Triggers:
 #   1. push tag v*        -> builds and publishes
-#   2. workflow_dispatch  -> manual; defaults to dry-run (pack only).
+#   2. workflow_dispatch  -> manual; defaults to dry-run (validate only).
 #                            Set dry_run input to 'false' to actually publish.
 on:
   push:
@@ -11,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Dry run (pack only, do not publish)"
+        description: "Dry run (validate only, do not publish)"
         required: false
         default: "true"
 
@@ -25,23 +26,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22.19.0"
           registry-url: "https://registry.npmjs.org"
+          cache: npm
 
-      - name: Install deps
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev fd-find ripgrep
+          sudo ln -s $(which fdfind) /usr/local/bin/fd
+
+      - name: Install dependencies
         run: npm install --ignore-scripts --no-fund --no-audit
 
-      - name: Build all packages (generates model data, compiles TS)
+      - name: Build all packages
         run: npm run build
 
-      - name: Verify pi-stable package
-        run: cd packages/coding-agent && npm pack --dry-run
+      - name: Validate packages (dry run)
+        run: node scripts/publish.mjs --dry-run
 
-      - name: Publish (tag push, or manual non-dry-run)
+      - name: Publish all packages
         if: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false') }}
-        run: cd packages/coding-agent && npm publish --access public
+        run: node scripts/publish.mjs
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

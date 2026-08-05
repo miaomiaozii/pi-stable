@@ -12,7 +12,7 @@ import {
 	type TextContent,
 	type Usage,
 	uuidv7,
-} from "@earendil-works/pi-ai";
+} from "pi-stable-ai";
 import type { AgentMessage, ThinkingLevel } from "../../types.ts";
 import {
 	convertToLlm,

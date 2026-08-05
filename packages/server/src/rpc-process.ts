@@ -8,7 +8,7 @@ import type {
 	RpcExtensionUIRequest,
 	RpcExtensionUIResponse,
 	RpcResponse,
-} from "@earendil-works/pi-coding-agent";
+} from "pi-stable";
 import { isBunBinary } from "./config.ts";
 
 interface PendingRequest {
@@ -56,7 +56,7 @@ export class RpcProcessInstance {
 		}
 		return {
 			command: process.execPath,
-			args: [require.resolve("@earendil-works/pi-coding-agent/rpc-entry")],
+			args: [require.resolve("pi-stable/rpc-entry")],
 		};
 	}
 
