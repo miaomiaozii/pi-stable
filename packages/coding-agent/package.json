@@ -1,11 +1,10 @@
 {
 	"name": "pi-stable",
-	"version": "0.83.0",
+	"version": "0.83.1",
 	"description": "Coding agent CLI with read, bash, edit, write tools and session management",
 	"type": "module",
 	"piConfig": {
-		"name": "pi-stable",
-		"configDir": ".pi-stable"
+		"configDir": ".pi"
 	},
 	"bin": {
 		"pi-stable": "dist/cli.js"
