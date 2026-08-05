@@ -71,11 +71,10 @@ jobs:
       - name: Build binaries for all platforms
         run: |
           set -euo pipefail
-          VERSION="${RELEASE_TAG#v}"
           mkdir -p release-assets
           ./scripts/build-binaries.sh \
             --skip-install \
-            --skip-deps \
+            --skip-build \
             --out "packages/coding-agent/binaries"
 
       - name: Stage release assets
