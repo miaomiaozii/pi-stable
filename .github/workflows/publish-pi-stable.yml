@@ -1,0 +1,47 @@
+name: Publish pi-stable
+
+# Triggers:
+#   1. push tag v*        -> builds and publishes
+#   2. workflow_dispatch  -> manual; defaults to dry-run (pack only).
+#                            Set dry_run input to 'false' to actually publish.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (pack only, do not publish)"
+        required: false
+        default: "true"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install deps
+        run: npm ci --ignore-scripts
+
+      - name: Build all packages (generates model data, compiles TS)
+        run: npm run build
+
+      - name: Verify pi-stable package
+        run: cd packages/coding-agent && npm pack --dry-run
+
+      - name: Publish (tag push, or manual non-dry-run)
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false') }}
+        run: cd packages/coding-agent && npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
