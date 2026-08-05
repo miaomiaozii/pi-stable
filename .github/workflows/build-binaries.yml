@@ -1,0 +1,172 @@
+name: Build Binaries
+
+# Builds cross-platform pi-stable binaries and publishes them to a GitHub Release.
+# Triggered by the same tag pushes that trigger npm publishing (publish-pi-stable.yml).
+# This workflow is binary-only; npm packages are handled separately.
+#
+# Outputs (per tag v0.83.2):
+#   pi-stable-darwin-arm64.tar.gz    (mac Apple Silicon)
+#   pi-stable-darwin-x64.tar.gz      (mac Intel)
+#   pi-stable-linux-x64.tar.gz
+#   pi-stable-linux-arm64.tar.gz
+#   pi-stable-windows-x64.zip
+#   pi-stable-windows-arm64.zip
+#   SHA256SUMS
+#   pi-stable-<version>-source.tar.gz
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build (e.g., v0.83.2)"
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: build-binaries-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev fd-find ripgrep
+          sudo ln -s "$(which fdfind)" /usr/local/bin/fd || true
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-fund --no-audit
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Build binaries for all platforms
+        run: |
+          set -euo pipefail
+          VERSION="${RELEASE_TAG#v}"
+          mkdir -p release-assets
+          ./scripts/build-binaries.sh \
+            --skip-install \
+            --skip-deps \
+            --out "packages/coding-agent/binaries"
+
+      - name: Stage release assets
+        run: |
+          set -euo pipefail
+          VERSION="${RELEASE_TAG#v}"
+          mkdir -p release-assets
+          cd packages/coding-agent/binaries
+
+          # Verify expected archives exist
+          binary_assets=(
+            pi-stable-darwin-arm64.tar.gz
+            pi-stable-darwin-x64.tar.gz
+            pi-stable-linux-x64.tar.gz
+            pi-stable-linux-arm64.tar.gz
+            pi-stable-windows-x64.zip
+            pi-stable-windows-arm64.zip
+          )
+          for asset in "${binary_assets[@]}"; do
+            test -f "${asset}"
+          done
+
+          cp "${binary_assets[@]}" "${GITHUB_WORKSPACE}/release-assets/"
+
+          cd "${GITHUB_WORKSPACE}/release-assets"
+          sha256sum "${binary_assets[@]}" > SHA256SUMS
+          echo "## pi-stable v${VERSION}" > RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "Cross-platform binaries. No Node.js required." >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "Install via:" >> RELEASE_NOTES.md
+          echo "\`\`\`bash" >> RELEASE_NOTES.md
+          echo "curl -fsSL https://raw.githubusercontent.com/ranxianglei/pi-stable/master/scripts/install.sh | bash" >> RELEASE_NOTES.md
+          echo "\`\`\`" >> RELEASE_NOTES.md
+          ls -lh
+
+      - name: Upload assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ env.RELEASE_TAG }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-release:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - name: Download assets
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets-${{ env.RELEASE_TAG }}
+          path: release-assets
+
+      - name: Create and publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd release-assets
+          sha256sum -c SHA256SUMS
+
+          # Fail if release already exists and is published
+          existing="$(gh release view "${RELEASE_TAG}" --json isDraft --jq .isDraft 2>/dev/null || true)"
+          if [[ "${existing}" == "false" ]]; then
+            echo "::error::Release ${RELEASE_TAG} is already published. Refusing to mutate it."
+            exit 1
+          fi
+
+          # Delete stale draft if present
+          gh release delete "${RELEASE_TAG}" --yes --cleanup-tag 2>/dev/null || true
+
+          assets=(
+            pi-stable-darwin-arm64.tar.gz
+            pi-stable-darwin-x64.tar.gz
+            pi-stable-linux-x64.tar.gz
+            pi-stable-linux-arm64.tar.gz
+            pi-stable-windows-x64.zip
+            pi-stable-windows-arm64.zip
+            SHA256SUMS
+            RELEASE_NOTES.md
+          )
+
+          gh release create "${RELEASE_TAG}" \
+            --title "pi-stable ${RELEASE_TAG}" \
+            --notes-file RELEASE_NOTES.md \
+            --verify-tag \
+            "${assets[@]}"
