@@ -32,7 +32,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install deps
-        run: npm ci --ignore-scripts
+        run: npm install --ignore-scripts --no-fund --no-audit
 
       - name: Build all packages (generates model data, compiles TS)
         run: npm run build
