@@ -1,5 +1,5 @@
 {
-	"name": "@earendil-works/pi-coding-agent",
+	"name": "pi-stable",
 	"version": "0.83.0",
 	"description": "Coding agent CLI with read, bash, edit, write tools and session management",
 	"type": "module",
@@ -7,7 +7,7 @@
 		"configDir": ".pi"
 	},
 	"bin": {
-		"pi": "dist/cli.js"
+		"pi-stable": "dist/cli.js"
 	},
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -26,7 +26,7 @@
 		"examples",
 		"containerization.md",
 		"CHANGELOG.md",
-		"npm-shrinkwrap.json"
+		"LICENSE"
 	],
 	"scripts": {
 		"clean": "shx rm -rf dist",
