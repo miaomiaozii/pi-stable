@@ -5,8 +5,8 @@
  * Requires: npm install in this directory
  */
 
-import type { ExtensionAPI } from "pi-stable";
 import ms from "ms";
+import type { ExtensionAPI } from "pi-stable";
 import { Type } from "typebox";
 
 export default function (pi: ExtensionAPI) {

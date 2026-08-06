@@ -12,9 +12,9 @@
  * - Progress tracking widget during execution
  */
 
+import type { ExtensionAPI, ExtensionContext } from "pi-stable";
 import type { AgentMessage } from "pi-stable-agent-core";
 import type { AssistantMessage, TextContent } from "pi-stable-ai";
-import type { ExtensionAPI, ExtensionContext } from "pi-stable";
 import { Key } from "pi-stable-tui";
 import { extractTodoItems, isSafeCommand, markCompletedSteps, type TodoItem } from "./utils.ts";
 

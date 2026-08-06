@@ -7,6 +7,7 @@ import * as fs from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createJiti } from "jiti/static";
 import * as _bundledPiAgentCore from "pi-stable-agent-core";
 import type { Provider } from "pi-stable-ai";
 import * as _bundledPiAiCompat from "pi-stable-ai/compat";
@@ -14,7 +15,6 @@ import * as _bundledPiAiOauth from "pi-stable-ai/oauth";
 import * as _bundledPiAiProviders from "pi-stable-ai/providers/all";
 import type { KeyId } from "pi-stable-tui";
 import * as _bundledPiTui from "pi-stable-tui";
-import { createJiti } from "jiti/static";
 // Static imports of packages that extensions may use.
 // These MUST be static so Bun bundles them into the compiled binary.
 // The virtualModules option then makes them available to extensions.
@@ -113,10 +113,7 @@ function getAliases(): Record<string, string> {
 	// global API keep working at runtime until compat is removed.
 	const piAiCompatEntry = resolveWorkspaceOrImport("ai/dist/compat.js", "pi-stable-ai/compat");
 	const piAiOauthEntry = resolveWorkspaceOrImport("ai/dist/oauth.js", "pi-stable-ai/oauth");
-	const piAiProvidersEntry = resolveWorkspaceOrImport(
-		"ai/dist/providers/all.js",
-		"pi-stable-ai/providers/all",
-	);
+	const piAiProvidersEntry = resolveWorkspaceOrImport("ai/dist/providers/all.js", "pi-stable-ai/providers/all");
 
 	_aliases = {
 		"pi-stable": piCodingAgentEntry,

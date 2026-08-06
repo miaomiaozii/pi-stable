@@ -1,9 +1,4 @@
-import {
-	CustomEditor,
-	type ExtensionAPI,
-	type ExtensionContext,
-	type KeybindingsManager,
-} from "pi-stable";
+import { CustomEditor, type ExtensionAPI, type ExtensionContext, type KeybindingsManager } from "pi-stable";
 import type { Component, EditorTheme, TUI } from "pi-stable-tui";
 import { truncateToWidth, visibleWidth } from "pi-stable-tui";
 

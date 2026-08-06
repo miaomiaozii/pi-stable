@@ -15,6 +15,9 @@
  */
 
 import { mkdtemp, writeFile } from "node:fs/promises";
+import { execSync } from "child_process";
+import { tmpdir } from "os";
+import { join } from "path";
 import type { ExtensionAPI } from "pi-stable";
 import {
 	DEFAULT_MAX_BYTES,
@@ -25,9 +28,6 @@ import {
 	withFileMutationQueue,
 } from "pi-stable";
 import { Text } from "pi-stable-tui";
-import { execSync } from "child_process";
-import { tmpdir } from "os";
-import { join } from "path";
 import { Type } from "typebox";
 
 const RgParams = Type.Object({

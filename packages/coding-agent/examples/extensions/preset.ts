@@ -40,9 +40,9 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { Api, Model } from "pi-stable-ai";
 import type { ExtensionAPI, ExtensionContext } from "pi-stable";
 import { CONFIG_DIR_NAME, DynamicBorder, getAgentDir } from "pi-stable";
+import type { Api, Model } from "pi-stable-ai";
 import { Container, Key, type SelectItem, SelectList, Text } from "pi-stable-tui";
 
 // Preset configuration

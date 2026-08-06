@@ -1,9 +1,9 @@
 import { readFile as fsReadFile, stat as fsStat } from "node:fs/promises";
 import { createInterface } from "node:readline";
-import type { AgentTool } from "pi-stable-agent-core";
-import { Text } from "pi-stable-tui";
 import { spawn } from "child_process";
 import path from "path";
+import type { AgentTool } from "pi-stable-agent-core";
+import { Text } from "pi-stable-tui";
 import { type Static, Type } from "typebox";
 import { keyHint } from "../../modes/interactive/components/keybinding-hints.ts";
 import type { Theme } from "../../modes/interactive/theme/theme.ts";

@@ -1,9 +1,9 @@
 import { basename, dirname, isAbsolute, relative, resolve as resolvePath, sep } from "node:path";
+import { constants } from "fs";
+import { access as fsAccess, readFile as fsReadFile } from "fs/promises";
 import type { AgentTool } from "pi-stable-agent-core";
 import type { Api, ImageContent, Model, TextContent } from "pi-stable-ai";
 import { Text } from "pi-stable-tui";
-import { constants } from "fs";
-import { access as fsAccess, readFile as fsReadFile } from "fs/promises";
 import { type Static, Type } from "typebox";
 import { getReadmePath } from "../../config.ts";
 import { keyHint, keyText } from "../../modes/interactive/components/keybinding-hints.ts";

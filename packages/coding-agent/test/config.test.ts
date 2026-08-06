@@ -175,15 +175,7 @@ describe("detectInstallMethod", () => {
 		expect(detectInstallMethod()).toBe("npm");
 		expect(command).toEqual({
 			command: "npm",
-			args: [
-				"--prefix",
-				prefix,
-				"install",
-				"-g",
-				"--ignore-scripts",
-				"--min-release-age=0",
-				"pi-stable",
-			],
+			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "pi-stable"],
 			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 pi-stable`,
 		});
 	});
@@ -198,15 +190,7 @@ describe("detectInstallMethod", () => {
 
 		expect(command).toEqual({
 			command: "npm",
-			args: [
-				"--prefix",
-				prefix,
-				"install",
-				"-g",
-				"--ignore-scripts",
-				"--min-release-age=0",
-				"pi-stable@1.2.3",
-			],
+			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "pi-stable@1.2.3"],
 			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 pi-stable@1.2.3`,
 		});
 	});
@@ -242,15 +226,7 @@ describe("detectInstallMethod", () => {
 
 		expect(command).toEqual({
 			command: "npm",
-			args: [
-				"--prefix",
-				prefix,
-				"install",
-				"-g",
-				"--ignore-scripts",
-				"--min-release-age=0",
-				"pi-stable",
-			],
+			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "pi-stable"],
 			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 pi-stable`,
 		});
 	});
@@ -430,8 +406,6 @@ describe("detectInstallMethod", () => {
 		chmodSync(packageDir, 0o500);
 
 		expect(getSelfUpdateCommand("pi-stable")).toBeUndefined();
-		expect(getSelfUpdateUnavailableInstruction("pi-stable")).toContain(
-			"the install path is not writable",
-		);
+		expect(getSelfUpdateUnavailableInstruction("pi-stable")).toContain("the install path is not writable");
 	});
 });

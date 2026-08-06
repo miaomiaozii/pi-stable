@@ -23,6 +23,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { ContentBlockParam, MessageCreateParamsStreaming } from "@anthropic-ai/sdk/resources/messages.js";
+import type { ExtensionAPI } from "pi-stable";
 import {
 	type Api,
 	type AssistantMessage,
@@ -43,7 +44,6 @@ import {
 	type ToolCall,
 	type ToolResultMessage,
 } from "pi-stable-ai";
-import type { ExtensionAPI } from "pi-stable";
 
 // =============================================================================
 // OAuth implementation adapted for the legacy extension compatibility interface.

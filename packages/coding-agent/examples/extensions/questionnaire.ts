@@ -6,15 +6,7 @@
  */
 
 import type { ExtensionAPI } from "pi-stable";
-import {
-	Editor,
-	type EditorTheme,
-	Key,
-	matchesKey,
-	Text,
-	visibleWidth,
-	wrapTextWithAnsi,
-} from "pi-stable-tui";
+import { Editor, type EditorTheme, Key, matchesKey, Text, visibleWidth, wrapTextWithAnsi } from "pi-stable-tui";
 import { Type } from "typebox";
 
 // Types

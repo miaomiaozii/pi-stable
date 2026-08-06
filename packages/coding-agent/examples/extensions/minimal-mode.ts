@@ -16,6 +16,7 @@
  * Then use ctrl+o to toggle between minimal (collapsed) and full (expanded) views.
  */
 
+import { homedir } from "os";
 import type { ExtensionAPI } from "pi-stable";
 import {
 	createBashTool,
@@ -27,7 +28,6 @@ import {
 	createWriteTool,
 } from "pi-stable";
 import { Text } from "pi-stable-tui";
-import { homedir } from "os";
 
 /**
  * Shorten a path by replacing home directory with ~

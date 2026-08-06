@@ -2,9 +2,9 @@
  * List available models with optional fuzzy search
  */
 
+import chalk from "chalk";
 import type { Api, Model } from "pi-stable-ai";
 import { fuzzyFilter } from "pi-stable-tui";
-import chalk from "chalk";
 import { formatNoModelsAvailableMessage } from "../core/auth-guidance.ts";
 import type { ModelRuntime } from "../core/model-runtime.ts";
 

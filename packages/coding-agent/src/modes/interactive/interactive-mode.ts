@@ -7,6 +7,8 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import chalk from "chalk";
+import { spawn, spawnSync } from "child_process";
 import type { AgentMessage } from "pi-stable-agent-core";
 import type { AuthEvent, AuthPrompt } from "pi-stable-ai";
 import type { AssistantMessage, ImageContent, Message, Model } from "pi-stable-ai/compat";
@@ -38,8 +40,6 @@ import {
 	TUI,
 	visibleWidth,
 } from "pi-stable-tui";
-import chalk from "chalk";
-import { spawn, spawnSync } from "child_process";
 import {
 	APP_NAME,
 	APP_TITLE,

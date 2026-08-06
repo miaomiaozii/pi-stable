@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import chalk from "chalk";
 import type { ThinkingLevel } from "pi-stable-agent-core";
 import {
 	type EditorTheme,
@@ -9,7 +10,6 @@ import {
 	type SelectListTheme,
 	type SettingsListTheme,
 } from "pi-stable-tui";
-import chalk from "chalk";
 import { type Static, Type } from "typebox";
 import { Compile } from "typebox/compile";
 import { getCustomThemesDir, getThemesDir } from "../../../config.ts";
