@@ -69,6 +69,13 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 	"@mariozechner/pi-ai/oauth": _bundledPiAiOauth,
 	"@mariozechner/pi-ai/providers/all": _bundledPiAiProviders,
 	"@mariozechner/pi-coding-agent": _bundledPiCodingAgent,
+	"@earendil-works/pi-coding-agent": _bundledPiCodingAgent,
+	"@earendil-works/pi-agent-core": _bundledPiAgentCore,
+	"@earendil-works/pi-tui": _bundledPiTui,
+	"@earendil-works/pi-ai": _bundledPiAiCompat,
+	"@earendil-works/pi-ai/compat": _bundledPiAiCompat,
+	"@earendil-works/pi-ai/oauth": _bundledPiAiOauth,
+	"@earendil-works/pi-ai/providers/all": _bundledPiAiProviders,
 };
 
 const require = createRequire(import.meta.url);
@@ -120,6 +127,13 @@ function getAliases(): Record<string, string> {
 		"pi-stable-ai/oauth": piAiOauthEntry,
 		"pi-stable-ai": piAiCompatEntry,
 		"@mariozechner/pi-coding-agent": piCodingAgentEntry,
+		"@earendil-works/pi-coding-agent": piCodingAgentEntry,
+		"@earendil-works/pi-agent-core": piAgentCoreEntry,
+		"@earendil-works/pi-tui": piTuiEntry,
+		"@earendil-works/pi-ai/providers/all": piAiProvidersEntry,
+		"@earendil-works/pi-ai/compat": piAiCompatEntry,
+		"@earendil-works/pi-ai/oauth": piAiOauthEntry,
+		"@earendil-works/pi-ai": piAiCompatEntry,
 		"@mariozechner/pi-agent-core": piAgentCoreEntry,
 		"@mariozechner/pi-tui": piTuiEntry,
 		"@mariozechner/pi-ai/providers/all": piAiProvidersEntry,
