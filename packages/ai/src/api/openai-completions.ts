@@ -134,10 +134,46 @@ function isVideoContentBlock(block: { type: string }): block is VideoContent {
 	return block.type === "video";
 }
 
+/**
+ * Video content part on the OpenAI-compatible completions wire format.
+ *
+ * This shape is NOT part of the OpenAI SDK's ChatCompletionContentPart union
+ * (the SDK only knows "text", "image_url", and "refusal"). It matches the
+ * llama.cpp MTMD (multimodal) server protocol, which accepts an
+ * `input_video` part carrying a raw base64 payload when the server is built
+ * with MTMD_VIDEO=ON. Providers routed through the OpenAI-completions path
+ * (e.g. the local llama router in
+ * packages/coding-agent/src/extensions/llama/model.ts) speak this protocol.
+ */
 type ChatCompletionContentPartVideo = {
 	type: "input_video";
 	input_video: { data: string };
 };
+
+/**
+ * A content part as it travels to the provider, including the video variant
+ * that the OpenAI SDK's own union does not know about. Used to type local
+ * content arrays before the single, documented cast at the SDK boundary.
+ */
+type WireContentPart = ChatCompletionContentPart | ChatCompletionContentPartVideo;
+
+/**
+ * Build a user message carrying media (a leading text part plus image and
+ * input_video parts) for the OpenAI-compatible completions wire format.
+ *
+ * The OpenAI SDK's ChatCompletionMessageParam union is closed and knows no
+ * `input_video` part, so the media-aware message must cross into it via a
+ * single, documented cast here. This is the only bridge for the tool-result
+ * media replay path; the cast is safe because the shape matches the
+ * provider's expected user message exactly.
+ */
+function toMediaUserMessage(
+	text: string,
+	mediaBlocks: Array<ChatCompletionContentPartImage | ChatCompletionContentPartVideo>,
+): ChatCompletionMessageParam {
+	const content: WireContentPart[] = [{ type: "text", text } satisfies ChatCompletionContentPartText, ...mediaBlocks];
+	return { role: "user", content } as ChatCompletionMessageParam;
+}
 
 function isReasoningDetailObject(detail: unknown): detail is Record<string, unknown> {
 	return typeof detail === "object" && detail !== null && !Array.isArray(detail);
@@ -1200,7 +1236,7 @@ export function convertMessages(
 					content: sanitizeSurrogates(msg.content),
 				});
 			} else {
-				const content: ChatCompletionContentPart[] = msg.content.map((item): ChatCompletionContentPart => {
+				const content: WireContentPart[] = msg.content.map((item): WireContentPart => {
 					if (item.type === "text") {
 						return {
 							type: "text",
@@ -1218,13 +1254,12 @@ export function convertMessages(
 					return {
 						type: "input_video",
 						input_video: { data: item.data },
-					} as unknown as ChatCompletionContentPart;
+					} satisfies ChatCompletionContentPartVideo;
 				});
 				if (content.length === 0) continue;
-				params.push({
-					role: "user",
-					content,
-				});
+				// Cast once at the SDK boundary: our WireContentPart[] includes the
+				// provider-specific input_video part the OpenAI SDK union lacks.
+				params.push({ role: "user", content } as ChatCompletionMessageParam);
 			}
 		} else if (msg.role === "assistant") {
 			// Some providers don't accept null content, use empty string instead
@@ -1398,16 +1433,7 @@ export function convertMessages(
 					});
 				}
 
-				params.push({
-					role: "user",
-					content: [
-						{
-							type: "text",
-							text: "Attached media from tool result:",
-						},
-						...mediaBlocks,
-					],
-				} as unknown as ChatCompletionMessageParam);
+				params.push(toMediaUserMessage("Attached media from tool result:", mediaBlocks));
 				lastRole = "user";
 			} else {
 				lastRole = "toolResult";
