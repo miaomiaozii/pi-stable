@@ -5,7 +5,7 @@
  * and converting the ANSI output to HTML.
  */
 
-import type { ImageContent, TextContent } from "pi-stable-ai";
+import type { UserContent } from "pi-stable-ai";
 import type { Component } from "pi-stable-tui";
 import type { Theme } from "../../modes/interactive/theme/theme.ts";
 import type { ToolDefinition, ToolRenderContext } from "../extensions/types.ts";
@@ -134,7 +134,7 @@ export function createToolHtmlRenderer(deps: ToolHtmlRendererDeps): ToolHtmlRend
 				// Build AgentToolResult from content array
 				// Cast content since session storage uses generic object types
 				const agentToolResult = {
-					content: result as (TextContent | ImageContent)[],
+					content: result as UserContent[],
 					details,
 					isError,
 				};

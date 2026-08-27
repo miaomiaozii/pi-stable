@@ -34,6 +34,19 @@ describe("buildInitialMessage", () => {
 		expect(parsed.messages).toEqual([]);
 	});
 
+	test("preserves file videos as initial attachments", () => {
+		const parsed = createArgs(["Describe it"]);
+		const video = { type: "video" as const, mimeType: "video/mp4", data: "AAAA" };
+		const result = buildInitialMessage({
+			parsed,
+			fileText: '<file name="clip.mp4"></file>\n',
+			fileVideos: [video],
+		});
+
+		expect(result.initialMessage).toBe('<file name="clip.mp4"></file>\nDescribe it');
+		expect(result.initialVideos).toEqual([video]);
+	});
+
 	test("combines stdin, file text, and first CLI message in one prompt", () => {
 		const parsed = createArgs(["Explain it", "Second message"]);
 		const result = buildInitialMessage({

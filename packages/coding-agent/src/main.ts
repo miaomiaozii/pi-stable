@@ -6,8 +6,8 @@
  */
 
 import { createInterface } from "node:readline";
-import { type ImageContent, modelsAreEqual } from "pi-stable-ai";
 import chalk from "chalk";
+import { type ImageContent, modelsAreEqual, type VideoContent } from "pi-stable-ai";
 import { type Args, type Mode, normalizeSessionName, parseArgs, printHelp } from "./cli/args.ts";
 import {
 	type AuthCheckResult,
@@ -212,16 +212,18 @@ async function prepareInitialMessage(
 ): Promise<{
 	initialMessage?: string;
 	initialImages?: ImageContent[];
+	initialVideos?: VideoContent[];
 }> {
 	if (parsed.fileArgs.length === 0) {
 		return buildInitialMessage({ parsed, stdinContent });
 	}
 
-	const { text, images } = await processFileArguments(parsed.fileArgs, { autoResizeImages });
+	const { text, images, videos } = await processFileArguments(parsed.fileArgs, { autoResizeImages });
 	return buildInitialMessage({
 		parsed,
 		fileText: text,
 		fileImages: images,
+		fileVideos: videos,
 		stdinContent,
 	});
 }
@@ -873,7 +875,7 @@ export async function main(args: string[], options?: MainOptions) {
 	}
 	time("readPipedStdin");
 
-	const { initialMessage, initialImages } = await prepareInitialMessage(
+	const { initialMessage, initialImages, initialVideos } = await prepareInitialMessage(
 		parsed,
 		settingsManager.getImageAutoResize(),
 		stdinContent,
@@ -933,6 +935,7 @@ export async function main(args: string[], options?: MainOptions) {
 			autoTrustOnReloadCwd,
 			initialMessage,
 			initialImages,
+			initialVideos,
 			initialMessages: parsed.messages,
 			verbose: parsed.verbose,
 			tuiMode: parsed.tuiMode,
@@ -965,6 +968,7 @@ export async function main(args: string[], options?: MainOptions) {
 			messages: parsed.messages,
 			initialMessage,
 			initialImages,
+			initialVideos,
 		});
 		stopThemeWatcher();
 		restoreStdout();

@@ -51,7 +51,7 @@ interface GitLabModel {
 	baseUrl: string;
 	reasoning: boolean;
 	thinkingLevelMap?: ThinkingLevelMap;
-	input: ("text" | "image")[];
+	input: ("text" | "image" | "video")[];
 	cost: { input: number; output: number; cacheRead: number; cacheWrite: number };
 	contextWindow: number;
 	maxTokens: number;

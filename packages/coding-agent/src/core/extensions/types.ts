@@ -29,9 +29,10 @@ import type {
 	ProviderHeaders,
 	RefreshModelsContext,
 	SimpleStreamOptions,
-	TextContent,
 	ToolResultMessage,
 	Usage,
+	UserContent,
+	VideoContent,
 } from "pi-stable-ai";
 import type {
 	AutocompleteItem,
@@ -400,7 +401,7 @@ export interface ReplacedSessionContext extends ExtensionCommandContext {
 	): Promise<void>;
 
 	sendUserMessage(
-		content: string | (TextContent | ImageContent)[],
+		content: string | UserContent[],
 		options?: { deliverAs?: "steer" | "followUp"; expandPromptTemplates?: boolean },
 	): Promise<void>;
 }
@@ -720,6 +721,8 @@ export interface BeforeAgentStartEvent {
 	prompt: string;
 	/** Images attached to the user prompt, if any. */
 	images?: ImageContent[];
+	/** Videos attached to the user prompt, if any. */
+	videos?: VideoContent[];
 	/** The fully assembled system prompt string. */
 	systemPrompt: string;
 	/** Structured options used to build the system prompt. Extensions can inspect this to understand what Pi loaded without re-discovering resources. */
@@ -852,6 +855,8 @@ export interface InputEvent {
 	text: string;
 	/** Attached images, if any */
 	images?: ImageContent[];
+	/** Attached videos, if any */
+	videos?: VideoContent[];
 	/** Where the input came from */
 	source: InputSource;
 	/** How the input will be delivered during streaming, or undefined when idle */
@@ -861,7 +866,7 @@ export interface InputEvent {
 /** Result from input event handler */
 export type InputEventResult =
 	| { action: "continue" }
-	| { action: "transform"; text: string; images?: ImageContent[] }
+	| { action: "transform"; text: string; images?: ImageContent[]; videos?: VideoContent[] }
 	| { action: "handled" };
 
 // ============================================================================
@@ -939,7 +944,7 @@ interface ToolResultEventBase {
 	type: "tool_result";
 	toolCallId: string;
 	input: Record<string, unknown>;
-	content: (TextContent | ImageContent)[];
+	content: UserContent[];
 	isError: boolean;
 	/** Usage from the tool execution itself, if available. */
 	usage?: Usage;
@@ -1122,7 +1127,7 @@ export interface UserBashEventResult {
 }
 
 export interface ToolResultEventResult {
-	content?: (TextContent | ImageContent)[];
+	content?: UserContent[];
 	details?: unknown;
 	isError?: boolean;
 	usage?: Usage;
@@ -1351,7 +1356,7 @@ export interface ExtensionAPI {
 	 * Set expandPromptTemplates to dispatch extension commands and expand skill commands and prompt templates.
 	 */
 	sendUserMessage(
-		content: string | (TextContent | ImageContent)[],
+		content: string | UserContent[],
 		options?: { deliverAs?: "steer" | "followUp"; expandPromptTemplates?: boolean },
 	): void;
 
@@ -1543,7 +1548,7 @@ export interface ProviderModelConfig {
 	/** Maps pi thinking levels to provider/model-specific values; null marks a level unsupported. */
 	thinkingLevelMap?: Model<Api>["thinkingLevelMap"];
 	/** Supported input types. */
-	input: ("text" | "image")[];
+	input: ("text" | "image" | "video")[];
 	/** Per-million-token cost rates and optional request-wide input pricing tiers. */
 	cost: Model<Api>["cost"];
 	/** Maximum context window size in tokens. */
@@ -1601,7 +1606,7 @@ export type SendMessageHandler = <T = unknown>(
 ) => void;
 
 export type SendUserMessageHandler = (
-	content: string | (TextContent | ImageContent)[],
+	content: string | UserContent[],
 	options?: { deliverAs?: "steer" | "followUp"; expandPromptTemplates?: boolean },
 ) => void;
 

@@ -14,7 +14,7 @@ import {
 import { readdir, stat } from "fs/promises";
 import { join, resolve } from "path";
 import type { AgentMessage } from "pi-stable-agent-core";
-import { type ImageContent, type Message, type TextContent, type Usage, uuidv7 } from "pi-stable-ai";
+import { type Message, type TextContent, type Usage, type UserContent, uuidv7 } from "pi-stable-ai";
 import { createInterface } from "readline";
 import { StringDecoder } from "string_decoder";
 import { APP_NAME, getAgentDir as getDefaultAgentDir, getSessionsDir } from "../config.ts";
@@ -135,7 +135,7 @@ export interface SessionInfoEntry extends SessionEntryBase {
 export interface CustomMessageEntry<T = unknown> extends SessionEntryBase {
 	type: "custom_message";
 	customType: string;
-	content: string | (TextContent | ImageContent)[];
+	content: string | UserContent[];
 	details?: T;
 	display: boolean;
 }
@@ -1163,14 +1163,14 @@ export class SessionManager {
 	/**
 	 * Append a custom message entry (for extensions) that participates in LLM context.
 	 * @param customType Extension identifier for filtering on reload
-	 * @param content Message content (string or TextContent/ImageContent array)
+	 * @param content Message content (string or UserContent array)
 	 * @param display Whether to show in TUI (true = styled display, false = hidden)
 	 * @param details Optional extension-specific metadata (not sent to LLM)
 	 * @returns Entry id
 	 */
 	appendCustomMessageEntry<T = unknown>(
 		customType: string,
-		content: string | (TextContent | ImageContent)[],
+		content: string | UserContent[],
 		display: boolean,
 		details?: T,
 	): string {

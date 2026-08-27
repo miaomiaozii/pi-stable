@@ -1066,7 +1066,7 @@ async function fetchOpenRouterModels(): Promise<Model<any>[]> {
 			modelKey = model.id; // Keep full ID for OpenRouter
 
 			// Parse input modalities
-			const input: ("text" | "image")[] = ["text"];
+			const input: ("text" | "image" | "video")[] = ["text"];
 			if (model.architecture?.modality?.includes("image")) {
 				input.push("image");
 			}
@@ -1130,7 +1130,7 @@ async function fetchAiGatewayModels(): Promise<Model<any>[]> {
 			// Only include models that support tools
 			if (!tags.includes("tool-use")) continue;
 
-			const input: ("text" | "image")[] = ["text"];
+			const input: ("text" | "image" | "video")[] = ["text"];
 			if (tags.includes("vision")) {
 				input.push("image");
 			}
@@ -1436,7 +1436,11 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 					provider: "amazon-bedrock" as const,
 					baseUrl: getBedrockBaseUrl(id),
 					reasoning: m.reasoning === true,
-					input: (m.modalities?.input?.includes("image") ? ["text", "image"] : ["text"]) as ("text" | "image")[],
+					input: (m.modalities?.input?.includes("image") ? ["text", "image"] : ["text"]) as (
+						| "text"
+						| "image"
+						| "video"
+					)[],
 					cost: {
 						input: m.cost?.input || 0,
 						output: m.cost?.output || 0,

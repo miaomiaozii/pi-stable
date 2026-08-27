@@ -3,7 +3,7 @@
  */
 
 import type { AgentMessage } from "pi-stable-agent-core";
-import type { ImageContent, Model, Provider, ProviderHeaders } from "pi-stable-ai";
+import type { ImageContent, Model, Provider, ProviderHeaders, VideoContent } from "pi-stable-ai";
 import type { KeyId } from "pi-stable-tui";
 import { type Theme, theme } from "../../modes/interactive/theme/theme.ts";
 import type { ResourceDiagnostic } from "../diagnostics.ts";
@@ -1083,6 +1083,7 @@ export class ExtensionRunner {
 		images: ImageContent[] | undefined,
 		systemPrompt: string,
 		systemPromptOptions: BuildSystemPromptOptions,
+		videos?: VideoContent[],
 	): Promise<BeforeAgentStartCombinedResult | undefined> {
 		let currentSystemPrompt = systemPrompt;
 		const ctx = Object.defineProperties(
@@ -1106,6 +1107,7 @@ export class ExtensionRunner {
 						type: "before_agent_start",
 						prompt,
 						images,
+						videos,
 						systemPrompt: currentSystemPrompt,
 						systemPromptOptions,
 					};
@@ -1198,10 +1200,12 @@ export class ExtensionRunner {
 		images: ImageContent[] | undefined,
 		source: InputSource,
 		streamingBehavior?: "steer" | "followUp",
+		videos?: VideoContent[],
 	): Promise<InputEventResult> {
 		const ctx = this.createContext();
 		let currentText = text;
 		let currentImages = images;
+		let currentVideos = videos;
 
 		for (const ext of this.extensions) {
 			for (const handler of ext.handlers.get("input") ?? []) {
@@ -1210,6 +1214,7 @@ export class ExtensionRunner {
 						type: "input",
 						text: currentText,
 						images: currentImages,
+						videos: currentVideos,
 						source,
 						streamingBehavior,
 					};
@@ -1218,6 +1223,7 @@ export class ExtensionRunner {
 					if (result?.action === "transform") {
 						currentText = result.text;
 						currentImages = result.images ?? currentImages;
+						currentVideos = result.videos ?? currentVideos;
 					}
 				} catch (err) {
 					this.emitError({
@@ -1229,8 +1235,8 @@ export class ExtensionRunner {
 				}
 			}
 		}
-		return currentText !== text || currentImages !== images
-			? { action: "transform", text: currentText, images: currentImages }
+		return currentText !== text || currentImages !== images || currentVideos !== videos
+			? { action: "transform", text: currentText, images: currentImages, videos: currentVideos }
 			: { action: "continue" };
 	}
 }

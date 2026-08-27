@@ -7,9 +7,9 @@
  * 3. Loads the result into the editor for user to fill in answers
  */
 
-import type { UserMessage } from "pi-stable-ai";
 import type { ExtensionAPI } from "pi-stable";
 import { BorderedLoader } from "pi-stable";
+import type { UserMessage } from "pi-stable-ai";
 
 const SYSTEM_PROMPT = `You are a question extractor. Given text from a conversation, extract any questions that need answering and format them for the user to fill in.
 

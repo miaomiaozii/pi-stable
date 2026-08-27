@@ -2,6 +2,7 @@ import {
 	type ImageContent as AiImageContent,
 	type TextContent as AiTextContent,
 	type Usage as AiUsage,
+	type VideoContent as AiVideoContent,
 	type Api,
 	type AssistantMessage,
 	getSupportedThinkingLevels,
@@ -236,6 +237,8 @@ function toProtocolUserContent(content: UserMessage["content"]): UserTranscriptI
 				return { type: "text", text: part.text };
 			case "image":
 				return { type: "image", data: part.data, mimeType: part.mimeType };
+			case "video":
+				return { type: "video", data: part.data, mimeType: part.mimeType };
 			default: {
 				const exhaustive: never = part;
 				return exhaustive;
@@ -336,13 +339,17 @@ export function toProtocolAssistantMessage(
 	}
 }
 
-function toProtocolToolContent(content: Array<AiTextContent | AiImageContent>): ToolTranscriptItem["content"] {
+function toProtocolToolContent(
+	content: Array<AiTextContent | AiImageContent | AiVideoContent>,
+): ToolTranscriptItem["content"] {
 	return content.map((part) => {
 		switch (part.type) {
 			case "text":
 				return { type: "text", text: part.text };
 			case "image":
 				return { type: "image", data: part.data, mimeType: part.mimeType };
+			case "video":
+				return { type: "video", data: part.data, mimeType: part.mimeType };
 			default: {
 				const exhaustive: never = part;
 				return exhaustive;

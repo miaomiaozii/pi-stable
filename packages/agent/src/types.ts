@@ -4,14 +4,13 @@ import type {
 	AssistantMessageEvent,
 	AssistantMessageEventStream,
 	Context,
-	ImageContent,
 	Message,
 	Model,
 	SimpleStreamOptions,
-	TextContent,
 	Tool,
 	ToolResultMessage,
 	Usage,
+	UserContent,
 } from "pi-stable-ai";
 import type { Static, TSchema } from "typebox";
 
@@ -82,7 +81,7 @@ export interface BeforeToolCallResult {
  * There is no deep merge for `content`, `details`, or `usage`.
  */
 export interface AfterToolCallResult {
-	content?: (TextContent | ImageContent)[];
+	content?: UserContent[];
 	details?: unknown;
 	isError?: boolean;
 	/** Usage from the final tool execution itself, if available. Not used for main LLM context accounting. */
@@ -359,8 +358,8 @@ export interface AgentState {
 
 /** Final or partial result produced by a tool. */
 export interface AgentToolResult<T> {
-	/** Text or image content returned to the model. */
-	content: (TextContent | ImageContent)[];
+	/** Text or media content returned to the model. */
+	content: UserContent[];
 	/** Arbitrary structured details for logs or UI rendering. */
 	details: T;
 	/** Usage from the final tool execution itself, if available. Not used for main LLM context accounting. */

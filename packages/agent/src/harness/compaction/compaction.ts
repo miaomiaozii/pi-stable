@@ -10,6 +10,7 @@ import {
 	retryAssistantCall,
 	type SimpleStreamOptions,
 	type Usage,
+	type UserContent,
 	uuidv7,
 } from "pi-stable-ai";
 import type { AgentMessage, ThinkingLevel } from "../../types.ts";
@@ -249,20 +250,16 @@ export function shouldCompact(contextTokens: number, contextWindow: number, sett
 	return contextTokens > contextWindow - settings.reserveTokens;
 }
 
-const ESTIMATED_IMAGE_CHARS = 4800;
+const ESTIMATED_MEDIA_CHARS = 4800;
 
-function estimateTextAndImageContentChars(content: string | Array<{ type: string; text?: string }>): number {
+function estimateUserContentChars(content: string | UserContent[]): number {
 	if (typeof content === "string") {
 		return content.length;
 	}
 
 	let chars = 0;
 	for (const block of content) {
-		if (block.type === "text" && block.text) {
-			chars += block.text.length;
-		} else if (block.type === "image") {
-			chars += ESTIMATED_IMAGE_CHARS;
-		}
+		chars += block.type === "text" ? block.text.length : ESTIMATED_MEDIA_CHARS;
 	}
 	return chars;
 }
@@ -273,9 +270,7 @@ export function estimateTokens(message: AgentMessage): number {
 
 	switch (message.role) {
 		case "user": {
-			chars = estimateTextAndImageContentChars(
-				(message as { content: string | Array<{ type: string; text?: string }> }).content,
-			);
+			chars = estimateUserContentChars(message.content);
 			return Math.ceil(chars / 4);
 		}
 		case "assistant": {
@@ -293,7 +288,7 @@ export function estimateTokens(message: AgentMessage): number {
 		}
 		case "custom":
 		case "toolResult": {
-			chars = estimateTextAndImageContentChars(message.content);
+			chars = estimateUserContentChars(message.content);
 			return Math.ceil(chars / 4);
 		}
 		case "bashExecution": {

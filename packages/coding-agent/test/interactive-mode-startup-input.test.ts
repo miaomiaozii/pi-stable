@@ -1,4 +1,6 @@
+import type { ImageContent, VideoContent } from "pi-stable-ai";
 import { describe, expect, it, vi } from "vitest";
+import type { QueuedUserInput } from "../src/core/agent-session.ts";
 import { InteractiveMode } from "../src/modes/interactive/interactive-mode.ts";
 
 type SubmitContext = {
@@ -14,13 +16,17 @@ type SubmitContext = {
 		prompt: (text: string, options?: unknown) => Promise<void>;
 	};
 	flushPendingBashComponents: () => void;
-	onInputCallback?: (text: string) => void;
-	pendingUserInputs: string[];
+	hasRestoredQueuedAttachments: () => boolean;
+	isExtensionCommand: (text: string) => boolean;
+	takeRestoredQueuedAttachments: () => { images?: ImageContent[]; videos?: VideoContent[] };
+	onInputCallback?: (input: QueuedUserInput) => void;
+	pendingUserInputs: QueuedUserInput[];
 };
 
 type InputContext = {
-	onInputCallback?: (text: string) => void;
-	pendingUserInputs: string[];
+	onInputCallback?: (input: QueuedUserInput) => void;
+	pendingUserInputs: QueuedUserInput[];
+	activeUserInput?: QueuedUserInput;
 };
 
 type StartupSubmitContext = {
@@ -50,6 +56,9 @@ function createSubmitContext(): SubmitContext {
 			prompt: vi.fn(async () => {}),
 		},
 		flushPendingBashComponents: vi.fn(),
+		hasRestoredQueuedAttachments: vi.fn(() => false),
+		isExtensionCommand: vi.fn(() => false),
+		takeRestoredQueuedAttachments: vi.fn(() => ({})),
 		pendingUserInputs: [],
 	};
 }
@@ -73,18 +82,45 @@ describe("InteractiveMode startup input", () => {
 
 		await context.defaultEditor.onSubmit?.(" early prompt ");
 
-		expect(context.pendingUserInputs).toEqual(["early prompt"]);
+		expect(context.pendingUserInputs).toEqual([{ text: "early prompt" }]);
 		expect(context.flushPendingBashComponents).toHaveBeenCalledTimes(1);
 		expect(context.editor.addToHistory).toHaveBeenCalledWith("early prompt");
 	});
 
+	it("submits an attachment-only input restored from a queue", async () => {
+		const video: VideoContent = { type: "video", data: "video-data", mimeType: "video/mp4" };
+		const context = createSubmitContext();
+		context.hasRestoredQueuedAttachments = vi.fn(() => true);
+		context.takeRestoredQueuedAttachments = vi.fn(() => ({ videos: [video] }));
+		interactiveModePrototype.setupEditorSubmitHandler.call(context);
+
+		await context.defaultEditor.onSubmit?.("");
+
+		expect(context.pendingUserInputs).toEqual([{ text: "", videos: [video] }]);
+		expect(context.flushPendingBashComponents).toHaveBeenCalledTimes(1);
+	});
+
+	it("keeps restored attachments queued when submitting an extension command", async () => {
+		const context = createSubmitContext();
+		context.hasRestoredQueuedAttachments = vi.fn(() => true);
+		context.isExtensionCommand = vi.fn((text) => text === "/extension-command");
+		interactiveModePrototype.setupEditorSubmitHandler.call(context);
+
+		await context.defaultEditor.onSubmit?.("/extension-command");
+
+		expect(context.takeRestoredQueuedAttachments).not.toHaveBeenCalled();
+		expect(context.pendingUserInputs).toEqual([{ text: "/extension-command" }]);
+	});
+
 	it("returns queued startup input before installing a new input callback", async () => {
+		const video: VideoContent = { type: "video", data: "video-data", mimeType: "video/mp4" };
 		const context: InputContext = {
-			pendingUserInputs: ["queued prompt"],
+			pendingUserInputs: [{ text: "queued prompt", videos: [video] }],
 		};
 
 		await expect(interactiveModePrototype.getUserInput.call(context)).resolves.toBe("queued prompt");
 		expect(context.onInputCallback).toBeUndefined();
 		expect(context.pendingUserInputs).toEqual([]);
+		expect(context.activeUserInput).toEqual({ text: "queued prompt", videos: [video] });
 	});
 });

@@ -369,6 +369,15 @@ export interface ImageContent {
 	mimeType: string; // e.g., "image/jpeg", "image/png"
 }
 
+export interface VideoContent {
+	type: "video";
+	data: string; // base64 encoded video data
+	mimeType: string; // e.g., "video/mp4", "video/webm"
+}
+
+export type MediaContent = ImageContent | VideoContent;
+export type UserContent = TextContent | MediaContent;
+
 export interface ToolCall {
 	type: "toolCall";
 	id: string;
@@ -420,7 +429,7 @@ export interface DeferredHandle {
 
 export interface UserMessage {
 	role: "user";
-	content: string | (TextContent | ImageContent)[];
+	content: string | UserContent[];
 	timestamp: number; // Unix timestamp in milliseconds
 }
 
@@ -450,7 +459,7 @@ export interface ToolResultMessage<TDetails = any> {
 	role: "toolResult";
 	toolCallId: string;
 	toolName: string;
-	content: (TextContent | ImageContent)[]; // Supports text and images
+	content: UserContent[]; // Supports text, images, and videos
 	details?: TDetails;
 	/** Usage from the tool execution itself, if available. Not part of main LLM context accounting. */
 	usage?: Usage;
@@ -830,7 +839,7 @@ export interface Model<TApi extends Api> {
 	 * Missing keys use provider defaults. null marks a level as unsupported.
 	 */
 	thinkingLevelMap?: ThinkingLevelMap;
-	input: ("text" | "image")[];
+	input: ("text" | "image" | "video")[];
 	cost: ModelCost;
 	contextWindow: number;
 	maxTokens: number;

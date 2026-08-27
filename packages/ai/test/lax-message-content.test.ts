@@ -10,8 +10,8 @@ import { describe, expect, it } from "vitest";
 import { transformMessages } from "../src/api/transform-messages.ts";
 import type { Message, Model } from "../src/types.ts";
 
-// Text-only model so the image downgrade path (replaceImagesWithPlaceholder) runs,
-// which was the primary crash site for null tool result content.
+// Text-only model so unsupported media downgrade runs, which was the primary
+// crash site for null tool result content.
 function makeTextOnlyModel(): Model<"openai-completions"> {
 	return {
 		id: "test-model",
@@ -63,5 +63,30 @@ describe("lax message content handling", () => {
 		for (const msg of result) {
 			expect(msg.content).toEqual([]);
 		}
+	});
+
+	it("replaces videos with role-specific placeholders for text-only models", () => {
+		const messages: Message[] = [
+			{
+				role: "user",
+				content: [{ type: "video", data: "user-video", mimeType: "video/mp4" }],
+				timestamp: 1,
+			},
+			{
+				role: "toolResult",
+				toolCallId: "read-1",
+				toolName: "read",
+				content: [{ type: "video", data: "tool-video", mimeType: "video/mp4" }],
+				isError: false,
+				timestamp: 2,
+			},
+		];
+
+		const result = transformMessages(messages, makeTextOnlyModel());
+
+		expect(result[0].content).toEqual([{ type: "text", text: "(video omitted: model does not support videos)" }]);
+		expect(result[1].content).toEqual([
+			{ type: "text", text: "(tool video omitted: model does not support videos)" },
+		]);
 	});
 });

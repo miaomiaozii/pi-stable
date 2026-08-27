@@ -1,6 +1,6 @@
-import { uuidv7 } from "pi-stable-ai";
 import type { ExtensionAPI, ExtensionCommandContext } from "pi-stable";
 import { DynamicBorder, getMarkdownTheme } from "pi-stable";
+import { uuidv7 } from "pi-stable-ai";
 import { Container, Markdown, matchesKey, Text } from "pi-stable-tui";
 
 type ContentBlock = {

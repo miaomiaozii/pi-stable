@@ -32,7 +32,6 @@ import type {
 	AssistantMessage,
 	CacheRetention,
 	Context,
-	ImageContent,
 	Model,
 	ProviderEnv,
 	ProviderResponse,
@@ -47,6 +46,7 @@ import type {
 	Tool,
 	ToolCall,
 	ToolResultMessage,
+	UserContent,
 } from "../types.ts";
 import { appendAssistantMessageDiagnostic } from "../utils/diagnostics.ts";
 import { normalizeProviderError } from "../utils/error-body.ts";
@@ -911,11 +911,13 @@ function sanitizeBedrockDocument(value: DocumentType): DocumentType {
 	return value;
 }
 
-function convertToolResultContent(content: (TextContent | ImageContent)[]): ToolResultContentBlock[] {
+function convertToolResultContent(content: UserContent[]): ToolResultContentBlock[] {
 	const result: ToolResultContentBlock[] = [];
 	for (const c of content) {
 		if (c.type === "image") {
 			result.push({ image: createImageBlock(c.mimeType, c.data) });
+		} else if (c.type === "video") {
+			result.push({ text: "(video omitted: Bedrock Converse serializer does not support videos)" });
 		} else {
 			const textBlock = createNonBlankTextBlock(c.text);
 			if (textBlock) result.push(textBlock);
@@ -952,6 +954,9 @@ function convertMessages(
 							}
 							case "image":
 								content.push({ image: createImageBlock(c.mimeType, c.data) });
+								break;
+							case "video":
+								content.push({ text: "(video omitted: Bedrock Converse serializer does not support videos)" });
 								break;
 							default:
 								continue;

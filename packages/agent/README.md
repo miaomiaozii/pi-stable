@@ -279,6 +279,11 @@ await agent.prompt("What's in this image?", [
   { type: "image", data: base64Data, mimeType: "image/jpeg" }
 ]);
 
+// With videos (the third argument keeps the existing image API compatible)
+await agent.prompt("Describe this video", undefined, [
+  { type: "video", data: videoBase64Data, mimeType: "video/mp4" }
+]);
+
 // AgentMessage directly
 await agent.prompt({ role: "user", content: "Hello", timestamp: Date.now() });
 

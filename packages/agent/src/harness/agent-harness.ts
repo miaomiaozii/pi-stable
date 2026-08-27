@@ -9,6 +9,7 @@ import type {
 	RetryPolicy,
 	SimpleStreamOptions,
 	Usage,
+	VideoContent,
 } from "pi-stable-ai";
 import type { AgentMessage, AgentTool, QueueMode, ThinkingLevel } from "../types.ts";
 import type { CompactionSettings } from "./compaction/compaction.ts";
@@ -271,7 +272,7 @@ export interface WatchHandle<TSnapshot> {
 export interface AgentLane {
 	readonly name: string;
 	getLeafId(): Promise<string | null>;
-	prompt(text: string, images?: ImageContent[]): Promise<RunResult>;
+	prompt(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<RunResult>;
 	prompt(message: AgentMessage | AgentMessage[]): Promise<RunResult>;
 	skill(name: string, additionalInstructions?: string): Promise<RunResult>;
 	promptFromTemplate(name: string, args?: string[]): Promise<RunResult>;
@@ -279,11 +280,11 @@ export interface AgentLane {
 	navigateTree(targetId: string | null, options?: NavigateOptions): Promise<NavigationResult>;
 	resume(): Promise<ResumeResult>;
 	abort(): Promise<AbortResult>;
-	steer(text: string, images?: ImageContent[]): Promise<QueueResult>;
+	steer(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<QueueResult>;
 	steer(message: AgentMessage): Promise<QueueResult>;
-	followUp(text: string, images?: ImageContent[]): Promise<QueueResult>;
+	followUp(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<QueueResult>;
 	followUp(message: AgentMessage): Promise<QueueResult>;
-	nextRun(text: string, images?: ImageContent[]): Promise<QueueResult>;
+	nextRun(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<QueueResult>;
 	nextRun(message: AgentMessage): Promise<QueueResult>;
 	cancelQueued(entryId: string): Promise<CancelQueuedResult>;
 	recordUsage(usage: Usage, options?: { entryId?: string; details?: JsonValue }): Promise<RecordUsageResult>;
@@ -360,9 +361,13 @@ export class AgentHarness implements AgentLane {
 		return this.durableSession.getLeafId();
 	}
 
-	async prompt(_text: string, _images?: ImageContent[]): Promise<RunResult>;
+	async prompt(_text: string, _images?: ImageContent[], _videos?: VideoContent[]): Promise<RunResult>;
 	async prompt(_message: AgentMessage | AgentMessage[]): Promise<RunResult>;
-	async prompt(_input: string | AgentMessage | AgentMessage[], _images?: ImageContent[]): Promise<RunResult> {
+	async prompt(
+		_input: string | AgentMessage | AgentMessage[],
+		_images?: ImageContent[],
+		_videos?: VideoContent[],
+	): Promise<RunResult> {
 		return this.unavailable("prompt");
 	}
 	async skill(_name: string, _additionalInstructions?: string): Promise<RunResult> {
@@ -383,19 +388,31 @@ export class AgentHarness implements AgentLane {
 	async abort(): Promise<AbortResult> {
 		return this.unavailable("abort");
 	}
-	async steer(_text: string, _images?: ImageContent[]): Promise<QueueResult>;
+	async steer(_text: string, _images?: ImageContent[], _videos?: VideoContent[]): Promise<QueueResult>;
 	async steer(_message: AgentMessage): Promise<QueueResult>;
-	async steer(_input: string | AgentMessage, _images?: ImageContent[]): Promise<QueueResult> {
+	async steer(
+		_input: string | AgentMessage,
+		_images?: ImageContent[],
+		_videos?: VideoContent[],
+	): Promise<QueueResult> {
 		return this.unavailable("steer");
 	}
-	async followUp(_text: string, _images?: ImageContent[]): Promise<QueueResult>;
+	async followUp(_text: string, _images?: ImageContent[], _videos?: VideoContent[]): Promise<QueueResult>;
 	async followUp(_message: AgentMessage): Promise<QueueResult>;
-	async followUp(_input: string | AgentMessage, _images?: ImageContent[]): Promise<QueueResult> {
+	async followUp(
+		_input: string | AgentMessage,
+		_images?: ImageContent[],
+		_videos?: VideoContent[],
+	): Promise<QueueResult> {
 		return this.unavailable("followUp");
 	}
-	async nextRun(_text: string, _images?: ImageContent[]): Promise<QueueResult>;
+	async nextRun(_text: string, _images?: ImageContent[], _videos?: VideoContent[]): Promise<QueueResult>;
 	async nextRun(_message: AgentMessage): Promise<QueueResult>;
-	async nextRun(_input: string | AgentMessage, _images?: ImageContent[]): Promise<QueueResult> {
+	async nextRun(
+		_input: string | AgentMessage,
+		_images?: ImageContent[],
+		_videos?: VideoContent[],
+	): Promise<QueueResult> {
 		return this.unavailable("nextRun");
 	}
 	async cancelQueued(_entryId: string): Promise<CancelQueuedResult> {

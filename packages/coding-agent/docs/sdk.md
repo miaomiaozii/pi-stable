@@ -73,8 +73,8 @@ interface AgentSession {
   prompt(text: string, options?: PromptOptions): Promise<void>;
 
   // Queue messages during streaming
-  steer(text: string): Promise<void>;
-  followUp(text: string): Promise<void>;
+  steer(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<void>;
+  followUp(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<void>;
 
   // Subscribe to events (returns unsubscribe function)
   subscribe(listener: (event: AgentSessionEvent) => void): () => void;
@@ -97,7 +97,12 @@ interface AgentSession {
   isStreaming: boolean;
 
   // In-place tree navigation within the current session file
-  navigateTree(targetId: string, options?: { summarize?: boolean; customInstructions?: string; replaceInstructions?: boolean; label?: string }): Promise<{ editorText?: string; cancelled: boolean }>;
+  navigateTree(targetId: string, options?: { summarize?: boolean; customInstructions?: string; replaceInstructions?: boolean; label?: string }): Promise<{
+    editorText?: string;
+    editorImages?: ImageContent[];
+    editorVideos?: VideoContent[];
+    cancelled: boolean;
+  }>;
 
   // Compaction
   compact(customInstructions?: string): Promise<CompactionResult>;
@@ -185,6 +190,7 @@ unsubscribe = session.subscribe(() => {});
 interface PromptOptions {
   expandPromptTemplates?: boolean;
   images?: ImageContent[];
+  videos?: VideoContent[];
   streamingBehavior?: "steer" | "followUp";
   source?: InputSource;
   preflightResult?: (success: boolean) => void;
@@ -204,9 +210,10 @@ The `prompt()` method handles prompt templates, extension commands, and message 
 // Basic prompt (when not streaming)
 await session.prompt("What files are here?");
 
-// With images
-await session.prompt("What's in this image?", {
-  images: [{ type: "image", source: { type: "base64", mediaType: "image/png", data: "..." } }]
+// With images and videos
+await session.prompt("Compare these attachments", {
+  images: [{ type: "image", mimeType: "image/png", data: "..." }],
+  videos: [{ type: "video", mimeType: "video/mp4", data: "..." }],
 });
 
 // During streaming: must specify how to queue the message
@@ -224,14 +231,16 @@ await session.prompt("After you're done, also check X", { streamingBehavior: "fo
 For explicit queueing during streaming:
 
 ```typescript
+const videos: VideoContent[] = [{ type: "video", mimeType: "video/mp4", data: "..." }];
+
 // Queue a steering message for delivery after the current assistant turn finishes its tool calls
-await session.steer("New instruction");
+await session.steer("New instruction", undefined, videos);
 
 // Wait for agent to finish (delivered only when agent stops)
-await session.followUp("After you're done, also do this");
+await session.followUp("After you're done, also do this", undefined, videos);
 ```
 
-Both `steer()` and `followUp()` expand file-based prompt templates but error on extension commands (extension commands cannot be queued).
+Both `steer()` and `followUp()` preserve image/video attachments, expand file-based prompt templates, and error on extension commands (extension commands cannot be queued).
 
 ### Agent and AgentState
 
@@ -1065,6 +1074,7 @@ const mode = new InteractiveMode(runtime, {
   modelFallbackMessage: undefined,
   initialMessage: "Hello",
   initialImages: [],
+  initialVideos: [],
   initialMessages: [],
 });
 
@@ -1104,6 +1114,7 @@ await runPrintMode(runtime, {
   mode: "text",
   initialMessage: "Hello",
   initialImages: [],
+  initialVideos: [],
   messages: ["Follow up"],
 });
 ```

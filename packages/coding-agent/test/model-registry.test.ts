@@ -256,6 +256,26 @@ describe("ModelRegistry", () => {
 			expect(model?.baseUrl).toBe("https://openrouter.ai/api/v1");
 		});
 
+		test("custom models accept video input capability", async () => {
+			writeRawModelsJson({
+				"local-video": {
+					baseUrl: "http://127.0.0.1:8080/v1",
+					api: "openai-completions",
+					models: [
+						{
+							id: "qwen-video",
+							reasoning: false,
+							input: ["text", "image", "video"],
+						},
+					],
+				},
+			});
+
+			const registry = await createModelRegistry(authStorage, modelsJsonPath);
+			expect(registry.getError()).toBeUndefined();
+			expect(registry.find("local-video", "qwen-video")?.input).toEqual(["text", "image", "video"]);
+		});
+
 		test("non-built-in provider custom models still require baseUrl", async () => {
 			writeRawModelsJson({
 				"my-custom-provider": {

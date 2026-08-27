@@ -624,8 +624,11 @@ Prefix files with `@` to include in the message:
 ```bash
 pi @prompt.md "Answer this"
 pi -p @screenshot.png "What's in this image?"
+pi -p @clip.mp4 "Describe this video"
 pi @code.ts @test.ts "Review these files"
 ```
+
+Supported video files include MP4/MOV, AVI, WebM/Matroska, and MPEG transport/program streams. The selected model must declare `"video"` input support. During an interactive session, you can also give the agent a local video path and ask it to read the file; the built-in `read` tool returns the video as a media attachment.
 
 ### Examples
 

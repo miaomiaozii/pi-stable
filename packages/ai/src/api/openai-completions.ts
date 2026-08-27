@@ -35,6 +35,7 @@ import type {
 	Tool,
 	ToolCall,
 	ToolResultMessage,
+	VideoContent,
 } from "../types.ts";
 import { formatProviderError, normalizeProviderError } from "../utils/error-body.ts";
 import { AssistantMessageEventStream } from "../utils/event-stream.ts";
@@ -128,6 +129,15 @@ function isToolCallBlock(block: { type: string }): block is ToolCall {
 function isImageContentBlock(block: { type: string }): block is ImageContent {
 	return block.type === "image";
 }
+
+function isVideoContentBlock(block: { type: string }): block is VideoContent {
+	return block.type === "video";
+}
+
+type ChatCompletionContentPartVideo = {
+	type: "input_video";
+	input_video: { data: string };
+};
 
 function isReasoningDetailObject(detail: unknown): detail is Record<string, unknown> {
 	return typeof detail === "object" && detail !== null && !Array.isArray(detail);
@@ -1196,7 +1206,8 @@ export function convertMessages(
 							type: "text",
 							text: sanitizeSurrogates(item.text),
 						} satisfies ChatCompletionContentPartText;
-					} else {
+					}
+					if (item.type === "image") {
 						return {
 							type: "image_url",
 							image_url: {
@@ -1204,6 +1215,10 @@ export function convertMessages(
 							},
 						} satisfies ChatCompletionContentPartImage;
 					}
+					return {
+						type: "input_video",
+						input_video: { data: item.data },
+					} as unknown as ChatCompletionContentPart;
 				});
 				if (content.length === 0) continue;
 				params.push({
@@ -1327,23 +1342,23 @@ export function convertMessages(
 			}
 			params.push(assistantMsg);
 		} else if (msg.role === "toolResult") {
-			const imageBlocks: Array<{ type: "image_url"; image_url: { url: string } }> = [];
+			const mediaBlocks: Array<ChatCompletionContentPartImage | ChatCompletionContentPartVideo> = [];
 			const deferredToolNames = new Set<string>();
 			let j = i;
 
 			for (; j < transformedMessages.length && transformedMessages[j].role === "toolResult"; j++) {
 				const toolMsg = transformedMessages[j] as ToolResultMessage;
 
-				// Extract text and image content
+				// Extract text and media content.
 				const textResult = toolMsg.content
 					.filter(isTextContentBlock)
 					.map((block) => block.text)
 					.join("\n");
-				const hasImages = toolMsg.content.some((c) => c.type === "image");
+				const hasMedia = toolMsg.content.some((block) => block.type === "image" || block.type === "video");
 
-				// Always send tool result with text (or placeholder if only images)
+				// Always send tool result with text (or placeholder if it only contains media).
 				const hasText = textResult.length > 0;
-				const toolResultText = hasText ? textResult : hasImages ? "(see attached image)" : "(no tool output)";
+				const toolResultText = hasText ? textResult : hasMedia ? "(see attached media)" : "(no tool output)";
 				// Some providers require the 'name' field in tool results
 				const toolResultMsg: ChatCompletionToolMessageParam = {
 					role: "tool",
@@ -1361,23 +1376,21 @@ export function convertMessages(
 					}
 				}
 
-				if (hasImages && model.input.includes("image")) {
-					for (const block of toolMsg.content) {
-						if (isImageContentBlock(block)) {
-							imageBlocks.push({
-								type: "image_url",
-								image_url: {
-									url: `data:${block.mimeType};base64,${block.data}`,
-								},
-							});
-						}
+				for (const block of toolMsg.content) {
+					if (model.input.includes("image") && isImageContentBlock(block)) {
+						mediaBlocks.push({
+							type: "image_url",
+							image_url: { url: `data:${block.mimeType};base64,${block.data}` },
+						});
+					} else if (model.input.includes("video") && isVideoContentBlock(block)) {
+						mediaBlocks.push({ type: "input_video", input_video: { data: block.data } });
 					}
 				}
 			}
 
 			i = j - 1;
 
-			if (imageBlocks.length > 0) {
+			if (mediaBlocks.length > 0) {
 				if (compat.requiresAssistantAfterToolResult) {
 					params.push({
 						role: "assistant",
@@ -1390,11 +1403,11 @@ export function convertMessages(
 					content: [
 						{
 							type: "text",
-							text: "Attached image(s) from tool result:",
+							text: "Attached media from tool result:",
 						},
-						...imageBlocks,
+						...mediaBlocks,
 					],
-				});
+				} as unknown as ChatCompletionMessageParam);
 				lastRole = "user";
 			} else {
 				lastRole = "toolResult";

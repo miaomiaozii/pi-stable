@@ -535,6 +535,7 @@ Fired after user submits prompt, before agent loop. Can inject a message and/or 
 pi.on("before_agent_start", async (event, ctx) => {
   // event.prompt - user's prompt text
   // event.images - attached images (if any)
+  // event.videos - attached videos (if any)
   // event.systemPrompt - current chained system prompt for this handler
   //   (includes changes from earlier before_agent_start handlers)
   // event.systemPromptOptions - structured options used to build the system prompt
@@ -905,6 +906,7 @@ Fired when user input is received, after extension commands are checked but befo
 pi.on("input", async (event, ctx) => {
   // event.text - raw input (before skill/template expansion)
   // event.images - attached images, if any
+  // event.videos - attached videos, if any
   // event.source - "interactive" (typed), "rpc" (API), or "extension" (via sendUserMessage)
   // event.streamingBehavior - "steer" | "followUp" | undefined
   //   undefined when idle, "steer" for mid-stream interrupts,
@@ -934,7 +936,7 @@ pi.on("input", async (event, ctx) => {
 
 **Results:**
 - `continue` - pass through unchanged (default if handler returns nothing)
-- `transform` - modify text/images, then continue to expansion
+- `transform` - modify text/images/videos, then continue to expansion
 - `handled` - skip agent entirely (first handler to return this wins)
 
 Transforms chain across handlers. See [input-transform.ts](../examples/extensions/input-transform.ts) and [input-transform-streaming.ts](../examples/extensions/input-transform-streaming.ts) for `streamingBehavior`-aware routing.
@@ -1426,10 +1428,11 @@ Send a user message to the agent. Unlike `sendMessage()` which sends custom mess
 // Simple text message
 pi.sendUserMessage("What is 2+2?");
 
-// With content array (text + images)
+// With content array (text + base64 media)
 pi.sendUserMessage([
-  { type: "text", text: "Describe this image:" },
-  { type: "image", source: { type: "base64", mediaType: "image/png", data: "..." } },
+  { type: "text", text: "Compare this image and video:" },
+  { type: "image", mimeType: "image/png", data: "..." },
+  { type: "video", mimeType: "video/mp4", data: "..." },
 ]);
 
 // During streaming - must specify delivery mode

@@ -1,10 +1,4 @@
-import type {
-	ConnectionState,
-	ConnectionStateChange,
-	PiClient,
-	SessionLease,
-	Unsubscribe,
-} from "pi-stable-client";
+import type { ConnectionState, ConnectionStateChange, PiClient, SessionLease, Unsubscribe } from "pi-stable-client";
 import type {
 	ModelMetadata,
 	ModelRef,

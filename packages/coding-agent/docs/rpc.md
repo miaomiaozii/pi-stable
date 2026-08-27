@@ -48,9 +48,10 @@ Send a user prompt to the agent. The command response is emitted after the promp
 {"id": "req-1", "type": "prompt", "message": "Hello, world!"}
 ```
 
-With images:
+With images or videos:
 ```json
 {"type": "prompt", "message": "What's in this image?", "images": [{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}]}
+{"type": "prompt", "message": "Describe this video", "videos": [{"type": "video", "data": "base64-encoded-data", "mimeType": "video/mp4"}]}
 ```
 
 **During streaming**: If the agent is already streaming, you must specify `streamingBehavior` to queue the message:
@@ -75,7 +76,7 @@ Response:
 
 `success: true` means the prompt was accepted, queued, or handled immediately. `success: false` means the prompt was rejected before acceptance. Failures after acceptance are reported through the normal event and message stream, not as a second `response` for the same request id.
 
-The `images` field is optional. Each image uses `ImageContent` format: `{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}`.
+The `images` and `videos` fields are optional. Images use `ImageContent` format: `{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}`. Videos use `VideoContent` format: `{"type": "video", "data": "base64-encoded-data", "mimeType": "video/mp4"}`.
 
 #### steer
 
@@ -85,12 +86,12 @@ Queue a steering message while the agent is running. It is delivered after the c
 {"type": "steer", "message": "Stop and do this instead"}
 ```
 
-With images:
+With media:
 ```json
-{"type": "steer", "message": "Look at this instead", "images": [{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}]}
+{"type": "steer", "message": "Look at this instead", "images": [{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}], "videos": [{"type": "video", "data": "base64-encoded-data", "mimeType": "video/mp4"}]}
 ```
 
-The `images` field is optional. Each image uses `ImageContent` format (same as `prompt`).
+The optional `images` and `videos` fields use the same formats as `prompt`.
 
 Response:
 ```json
@@ -107,12 +108,12 @@ Queue a follow-up message to be processed after the agent finishes. Delivered on
 {"type": "follow_up", "message": "After you're done, also do this"}
 ```
 
-With images:
+With media:
 ```json
-{"type": "follow_up", "message": "Also check this image", "images": [{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}]}
+{"type": "follow_up", "message": "Also check this media", "images": [{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}], "videos": [{"type": "video", "data": "base64-encoded-data", "mimeType": "video/mp4"}]}
 ```
 
-The `images` field is optional. Each image uses `ImageContent` format (same as `prompt`).
+The optional `images` and `videos` fields use the same formats as `prompt`.
 
 Response:
 ```json
@@ -1416,7 +1417,7 @@ Source files:
 }
 ```
 
-The `content` field can be a string or an array of `TextContent`/`ImageContent` blocks.
+The `content` field can be a string or an array of `TextContent`/`ImageContent`/`VideoContent` blocks.
 
 ### AssistantMessage
 

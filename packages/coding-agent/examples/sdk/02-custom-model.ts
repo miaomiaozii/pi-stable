@@ -5,7 +5,6 @@
  */
 
 import { createAgentSession, ModelRuntime } from "pi-stable";
-import { getModel } from "pi-stable-ai/compat";
 
 const modelRuntime = await ModelRuntime.create();
 

@@ -1,7 +1,7 @@
-import type { ImageContent, TextContent } from "pi-stable-ai";
+import type { ImageContent, TextContent, VideoContent } from "pi-stable-ai";
 import { processImage } from "./image-process.ts";
 
-export type ToolResultContent = TextContent | ImageContent;
+export type ToolResultContent = TextContent | ImageContent | VideoContent;
 
 export interface NormalizeToolResultImagesOptions {
 	/** Whether oversized images are resized to inline provider limits. Default: true */

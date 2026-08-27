@@ -31,8 +31,9 @@ import type {
 	ImageContent,
 	Model,
 	ProviderHeaders,
-	TextContent,
 	Usage,
+	UserContent,
+	VideoContent,
 } from "pi-stable-ai/compat";
 import {
 	clampThinkingLevel,
@@ -244,6 +245,8 @@ export interface PromptOptions {
 	expandPromptTemplates?: boolean;
 	/** Image attachments */
 	images?: ImageContent[];
+	/** Video attachments */
+	videos?: VideoContent[];
 	/** When streaming, how to queue the message: "steer" (interrupt) or "followUp" (wait). Required if streaming. */
 	streamingBehavior?: "steer" | "followUp";
 	/** Source of input for extension input event handlers. Defaults to "interactive". */
@@ -256,6 +259,17 @@ export interface PromptOptions {
 export interface ModelMutationOptions {
 	/** Persist the new value to global defaults. Defaults to session-only. */
 	persist?: boolean;
+}
+
+/** User input waiting in a steering or follow-up queue. */
+export interface QueuedUserInput {
+	text: string;
+	images?: ImageContent[];
+	videos?: VideoContent[];
+}
+
+interface QueuedUserInputRecord extends QueuedUserInput {
+	message: AgentMessage;
 }
 
 /** Result from cycleModel() */
@@ -321,10 +335,10 @@ export class AgentSession {
 	private _idleWaitPromise: Promise<void> | undefined;
 	private _resolveIdleWait: (() => void) | undefined;
 
-	/** Tracks pending steering messages for UI display. Removed when delivered. */
-	private _steeringMessages: string[] = [];
-	/** Tracks pending follow-up messages for UI display. Removed when delivered. */
-	private _followUpMessages: string[] = [];
+	/** Tracks pending steering messages for UI display and attachment-safe restoration. */
+	private _steeringMessages: QueuedUserInputRecord[] = [];
+	/** Tracks pending follow-up messages for UI display and attachment-safe restoration. */
+	private _followUpMessages: QueuedUserInputRecord[] = [];
 	/** Messages queued to be included with the next user prompt as context ("asides"). */
 	private _pendingNextTurnMessages: CustomMessage[] = [];
 
@@ -574,8 +588,8 @@ export class AgentSession {
 	private _emitQueueUpdate(): void {
 		this._emit({
 			type: "queue_update",
-			steering: [...this._steeringMessages],
-			followUp: [...this._followUpMessages],
+			steering: this._steeringMessages.map((message) => message.text),
+			followUp: this._followUpMessages.map((message) => message.text),
 		});
 	}
 
@@ -624,19 +638,19 @@ export class AgentSession {
 		if (event.type === "message_start" && event.message.role === "user") {
 			this._overflowRecoveryAttempted = false;
 			const messageText = contentText(event.message.content, "");
-			if (messageText) {
-				// Check steering queue first
-				const steeringIndex = this._steeringMessages.indexOf(messageText);
-				if (steeringIndex !== -1) {
-					this._steeringMessages.splice(steeringIndex, 1);
+			const matchesQueuedMessage = (queued: QueuedUserInputRecord): boolean =>
+				queued.message === event.message || queued.text === messageText;
+			// Check steering queue first
+			const steeringIndex = this._steeringMessages.findIndex(matchesQueuedMessage);
+			if (steeringIndex !== -1) {
+				this._steeringMessages.splice(steeringIndex, 1);
+				this._emitQueueUpdate();
+			} else {
+				// Check follow-up queue
+				const followUpIndex = this._followUpMessages.findIndex(matchesQueuedMessage);
+				if (followUpIndex !== -1) {
+					this._followUpMessages.splice(followUpIndex, 1);
 					this._emitQueueUpdate();
-				} else {
-					// Check follow-up queue
-					const followUpIndex = this._followUpMessages.indexOf(messageText);
-					if (followUpIndex !== -1) {
-						this._followUpMessages.splice(followUpIndex, 1);
-						this._emitQueueUpdate();
-					}
 				}
 			}
 		}
@@ -1150,12 +1164,14 @@ export class AgentSession {
 			// Emit input event for extension interception (before skill/template expansion)
 			let currentText = text;
 			let currentImages = options?.images;
+			let currentVideos = options?.videos;
 			if (this._extensionRunner.hasHandlers("input")) {
 				const inputResult = await this._extensionRunner.emitInput(
 					currentText,
 					currentImages,
 					options?.source ?? "interactive",
 					this.isStreaming ? options?.streamingBehavior : undefined,
+					currentVideos,
 				);
 				if (inputResult.action === "handled") {
 					preflightResult?.(true);
@@ -1164,6 +1180,7 @@ export class AgentSession {
 				if (inputResult.action === "transform") {
 					currentText = inputResult.text;
 					currentImages = inputResult.images ?? currentImages;
+					currentVideos = inputResult.videos ?? currentVideos;
 				}
 			}
 
@@ -1182,9 +1199,9 @@ export class AgentSession {
 					);
 				}
 				if (options.streamingBehavior === "followUp") {
-					await this._queueFollowUp(expandedText, currentImages);
+					await this._queueFollowUp(expandedText, currentImages, currentVideos);
 				} else {
-					await this._queueSteer(expandedText, currentImages);
+					await this._queueSteer(expandedText, currentImages, currentVideos);
 				}
 				preflightResult?.(true);
 				return;
@@ -1224,9 +1241,12 @@ export class AgentSession {
 			messages = [];
 
 			// Add user message
-			const userContent: (TextContent | ImageContent)[] = [{ type: "text", text: expandedText }];
+			const userContent: UserContent[] = [{ type: "text", text: expandedText }];
 			if (currentImages) {
 				userContent.push(...currentImages);
+			}
+			if (currentVideos) {
+				userContent.push(...currentVideos);
 			}
 			messages.push({
 				role: "user",
@@ -1246,6 +1266,7 @@ export class AgentSession {
 				currentImages,
 				this._baseSystemPrompt,
 				this._baseSystemPromptOptions,
+				currentVideos,
 			);
 			// Add all custom messages from extensions
 			if (result?.messages) {
@@ -1349,9 +1370,10 @@ export class AgentSession {
 	 * before the next LLM call.
 	 * Expands skill commands and prompt templates. Errors on extension commands.
 	 * @param images Optional image attachments to include with the message
+	 * @param videos Optional video attachments to include with the message
 	 * @throws Error if text is an extension command
 	 */
-	async steer(text: string, images?: ImageContent[]): Promise<void> {
+	async steer(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<void> {
 		// Check for extension commands (cannot be queued)
 		if (text.startsWith("/")) {
 			this._throwIfExtensionCommand(text);
@@ -1361,7 +1383,7 @@ export class AgentSession {
 		let expandedText = this._expandSkillCommand(text);
 		expandedText = expandPromptTemplate(expandedText, [...this.promptTemplates]);
 
-		await this._queueSteer(expandedText, images);
+		await this._queueSteer(expandedText, images, videos);
 	}
 
 	/**
@@ -1369,9 +1391,10 @@ export class AgentSession {
 	 * Delivered only when agent has no more tool calls or steering messages.
 	 * Expands skill commands and prompt templates. Errors on extension commands.
 	 * @param images Optional image attachments to include with the message
+	 * @param videos Optional video attachments to include with the message
 	 * @throws Error if text is an extension command
 	 */
-	async followUp(text: string, images?: ImageContent[]): Promise<void> {
+	async followUp(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<void> {
 		// Check for extension commands (cannot be queued)
 		if (text.startsWith("/")) {
 			this._throwIfExtensionCommand(text);
@@ -1381,41 +1404,59 @@ export class AgentSession {
 		let expandedText = this._expandSkillCommand(text);
 		expandedText = expandPromptTemplate(expandedText, [...this.promptTemplates]);
 
-		await this._queueFollowUp(expandedText, images);
+		await this._queueFollowUp(expandedText, images, videos);
 	}
 
 	/**
 	 * Internal: Queue a steering message (already expanded, no extension command check).
 	 */
-	private async _queueSteer(text: string, images?: ImageContent[]): Promise<void> {
-		this._steeringMessages.push(text);
-		this._emitQueueUpdate();
-		const content: (TextContent | ImageContent)[] = [{ type: "text", text }];
+	private async _queueSteer(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<void> {
+		const content: UserContent[] = [{ type: "text", text }];
 		if (images) {
 			content.push(...images);
 		}
-		this.agent.steer({
+		if (videos) {
+			content.push(...videos);
+		}
+		const message: AgentMessage = {
 			role: "user",
 			content,
 			timestamp: Date.now(),
+		};
+		this._steeringMessages.push({
+			text,
+			images: images ? [...images] : undefined,
+			videos: videos ? [...videos] : undefined,
+			message,
 		});
+		this._emitQueueUpdate();
+		this.agent.steer(message);
 	}
 
 	/**
 	 * Internal: Queue a follow-up message (already expanded, no extension command check).
 	 */
-	private async _queueFollowUp(text: string, images?: ImageContent[]): Promise<void> {
-		this._followUpMessages.push(text);
-		this._emitQueueUpdate();
-		const content: (TextContent | ImageContent)[] = [{ type: "text", text }];
+	private async _queueFollowUp(text: string, images?: ImageContent[], videos?: VideoContent[]): Promise<void> {
+		const content: UserContent[] = [{ type: "text", text }];
 		if (images) {
 			content.push(...images);
 		}
-		this.agent.followUp({
+		if (videos) {
+			content.push(...videos);
+		}
+		const message: AgentMessage = {
 			role: "user",
 			content,
 			timestamp: Date.now(),
+		};
+		this._followUpMessages.push({
+			text,
+			images: images ? [...images] : undefined,
+			videos: videos ? [...videos] : undefined,
+			message,
 		});
+		this._emitQueueUpdate();
+		this.agent.followUp(message);
 	}
 
 	/**
@@ -1490,45 +1531,64 @@ export class AgentSession {
 	 * @param options.expandPromptTemplates Whether to dispatch extension commands and expand skill commands and prompt templates. Default: false.
 	 */
 	async sendUserMessage(
-		content: string | (TextContent | ImageContent)[],
+		content: string | UserContent[],
 		options?: { deliverAs?: "steer" | "followUp"; expandPromptTemplates?: boolean },
 	): Promise<void> {
 		// Normalize content to text string + optional images
 		let text: string;
 		let images: ImageContent[] | undefined;
+		let videos: VideoContent[] | undefined;
 
 		if (typeof content === "string") {
 			text = content;
 		} else {
 			const textParts: string[] = [];
 			images = [];
+			videos = [];
 			for (const part of content) {
 				if (part.type === "text") {
 					textParts.push(part.text);
-				} else {
+				} else if (part.type === "image") {
 					images.push(part);
+				} else {
+					videos.push(part);
 				}
 			}
 			text = textParts.join("\n");
 			if (images.length === 0) images = undefined;
+			if (videos.length === 0) videos = undefined;
 		}
 
 		await this.prompt(text, {
 			expandPromptTemplates: options?.expandPromptTemplates ?? false,
 			streamingBehavior: options?.deliverAs,
 			images,
+			videos,
 			source: "extension",
 		});
 	}
 
 	/**
-	 * Clear all queued messages and return them.
-	 * Useful for restoring to editor when user aborts.
-	 * @returns Object with steering and followUp arrays
+	 * Clear all queued messages and return their text.
+	 * Useful for callers that do not restore media attachments.
 	 */
 	clearQueue(): { steering: string[]; followUp: string[] } {
-		const steering = [...this._steeringMessages];
-		const followUp = [...this._followUpMessages];
+		const { steering, followUp } = this.clearQueueWithAttachments();
+		return {
+			steering: steering.map((message) => message.text),
+			followUp: followUp.map((message) => message.text),
+		};
+	}
+
+	/** Clear all queued messages while preserving attachments for restoration. */
+	clearQueueWithAttachments(): { steering: QueuedUserInput[]; followUp: QueuedUserInput[] } {
+		const toQueuedInput = ({ text, images, videos }: QueuedUserInputRecord): QueuedUserInput => ({
+			text,
+			images,
+			videos,
+		});
+		const steering = this._steeringMessages.map(toQueuedInput);
+		const followUp = this._followUpMessages.map(toQueuedInput);
 		this._steeringMessages = [];
 		this._followUpMessages = [];
 		this.agent.clearAllQueues();
@@ -1543,12 +1603,12 @@ export class AgentSession {
 
 	/** Get pending steering messages (read-only) */
 	getSteeringMessages(): readonly string[] {
-		return this._steeringMessages;
+		return this._steeringMessages.map((message) => message.text);
 	}
 
 	/** Get pending follow-up messages (read-only) */
 	getFollowUpMessages(): readonly string[] {
-		return this._followUpMessages;
+		return this._followUpMessages.map((message) => message.text);
 	}
 
 	get resourceLoader(): ResourceLoader {
@@ -3025,12 +3085,19 @@ export class AgentSession {
 	 * @param options.customInstructions Custom instructions for summarizer
 	 * @param options.replaceInstructions If true, customInstructions replaces the default prompt
 	 * @param options.label Label to attach to the branch summary entry
-	 * @returns Result with editorText (if user message) and cancelled status
+	 * @returns Result with editor content (if user message) and cancelled status
 	 */
 	async navigateTree(
 		targetId: string,
 		options: { summarize?: boolean; customInstructions?: string; replaceInstructions?: boolean; label?: string } = {},
-	): Promise<{ editorText?: string; cancelled: boolean; aborted?: boolean; summaryEntry?: BranchSummaryEntry }> {
+	): Promise<{
+		editorText?: string;
+		editorImages?: ImageContent[];
+		editorVideos?: VideoContent[];
+		cancelled: boolean;
+		aborted?: boolean;
+		summaryEntry?: BranchSummaryEntry;
+	}> {
 		if (this.isStreaming) {
 			throw new Error("Wait for the current response to finish before navigating the session tree.");
 		}
@@ -3153,15 +3220,26 @@ export class AgentSession {
 			// Determine the new leaf position based on target type
 			let newLeafId: string | null;
 			let editorText: string | undefined;
+			let editorImages: ImageContent[] | undefined;
+			let editorVideos: VideoContent[] | undefined;
+			const extractEditorMedia = (content: string | UserContent[]): void => {
+				if (typeof content === "string") return;
+				const images = content.filter((item): item is ImageContent => item.type === "image");
+				const videos = content.filter((item): item is VideoContent => item.type === "video");
+				editorImages = images.length > 0 ? images : undefined;
+				editorVideos = videos.length > 0 ? videos : undefined;
+			};
 
 			if (targetEntry.type === "message" && targetEntry.message.role === "user") {
-				// User message: leaf = parent (null if root), text goes to editor
+				// User message: leaf = parent (null if root), content goes to editor
 				newLeafId = targetEntry.parentId;
 				editorText = contentText(targetEntry.message.content, "");
+				extractEditorMedia(targetEntry.message.content);
 			} else if (targetEntry.type === "custom_message") {
-				// Custom message: leaf = parent (null if root), text goes to editor
+				// Custom message: leaf = parent (null if root), content goes to editor
 				newLeafId = targetEntry.parentId;
 				editorText = contentText(targetEntry.content, "");
+				extractEditorMedia(targetEntry.content);
 			} else {
 				// Non-user message: leaf = selected node
 				newLeafId = targetId;
@@ -3213,7 +3291,7 @@ export class AgentSession {
 
 			// Emit to custom tools
 
-			return { editorText, cancelled: false, summaryEntry };
+			return { editorText, editorImages, editorVideos, cancelled: false, summaryEntry };
 		} finally {
 			this._branchSummaryAbortController = undefined;
 		}

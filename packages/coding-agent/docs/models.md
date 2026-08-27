@@ -203,7 +203,7 @@ If your command is slow, expensive, rate-limited, or should keep using a previou
 | `api` | No | provider's `api` | Override provider's API for this model |
 | `reasoning` | No | `false` | Supports extended thinking |
 | `thinkingLevelMap` | No | omitted | Maps pi thinking levels to provider values and marks unsupported levels (see below) |
-| `input` | No | `["text"]` | Input types: `["text"]` or `["text", "image"]` |
+| `input` | No | `["text"]` | Input types supported by the model: `"text"`, `"image"`, and `"video"` (for example, `["text", "image", "video"]`) |
 | `contextWindow` | No | `128000` | Context window size in tokens |
 | `maxTokens` | No | `16384` | Maximum output tokens |
 | `samplingParams` | No | omitted | Sampling parameters merged verbatim into every request body (see below) |

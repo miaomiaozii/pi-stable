@@ -7,9 +7,11 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import chalk from "chalk";
+import { spawn } from "child_process";
 import type { AgentMessage, ThinkingLevel } from "pi-stable-agent-core";
 import type { AuthEvent, AuthPrompt } from "pi-stable-ai";
-import type { AssistantMessage, ImageContent, Message, Model, Usage } from "pi-stable-ai/compat";
+import type { AssistantMessage, ImageContent, Message, Model, Usage, VideoContent } from "pi-stable-ai/compat";
 import type {
 	AutocompleteItem,
 	AutocompleteProvider,
@@ -43,8 +45,6 @@ import {
 	TuiMainScreen,
 	visibleWidth,
 } from "pi-stable-tui";
-import chalk from "chalk";
-import { spawn } from "child_process";
 import {
 	APP_NAME,
 	APP_TITLE,
@@ -55,7 +55,12 @@ import {
 	getDocsPath,
 	VERSION,
 } from "../../config.ts";
-import { type AgentSession, type AgentSessionEvent, parseSkillBlock } from "../../core/agent-session.ts";
+import {
+	type AgentSession,
+	type AgentSessionEvent,
+	parseSkillBlock,
+	type QueuedUserInput,
+} from "../../core/agent-session.ts";
 import { type AgentSessionRuntime, SessionImportFileNotFoundError } from "../../core/agent-session-runtime.ts";
 import type { AgentSessionRuntimeDiagnostic } from "../../core/agent-session-services.ts";
 import {
@@ -202,8 +207,7 @@ class ExpandableText extends Text implements Expandable {
 	}
 }
 
-type CompactionQueuedMessage = {
-	text: string;
+type CompactionQueuedMessage = QueuedUserInput & {
 	mode: "steer" | "followUp";
 };
 
@@ -345,6 +349,7 @@ export interface InteractiveModeOptions {
 	initialMessage?: string;
 	/** Images to attach to the initial message */
 	initialImages?: ImageContent[];
+	initialVideos?: VideoContent[];
 	/** Additional messages to send after the initial message */
 	initialMessages?: string[];
 	/** Force verbose startup (overrides quietStartup setting) */
@@ -445,8 +450,11 @@ export class InteractiveMode {
 	private keybindings: KeybindingsManager;
 	private version: string;
 	private isInitialized = false;
-	private onInputCallback?: (text: string) => void;
-	private pendingUserInputs: string[] = [];
+	private onInputCallback?: (input: QueuedUserInput) => void;
+	private pendingUserInputs: QueuedUserInput[] = [];
+	private activeUserInput: QueuedUserInput | undefined;
+	private restoredQueuedImages: ImageContent[] = [];
+	private restoredQueuedVideos: VideoContent[] = [];
 	private activeStatusIndicator: StatusIndicator | undefined = undefined;
 	private readonly idleStatus = new IdleStatus();
 	private workingMessage: string | undefined = undefined;
@@ -1124,6 +1132,7 @@ export class InteractiveMode {
 			modelFallbackMessage,
 			initialMessage,
 			initialImages,
+			initialVideos,
 			initialMessages,
 		} = this.options;
 
@@ -1155,7 +1164,7 @@ export class InteractiveMode {
 		// Process initial messages
 		if (initialMessage) {
 			try {
-				await this.session.prompt(initialMessage, { images: initialImages });
+				await this.session.prompt(initialMessage, { images: initialImages, videos: initialVideos });
 			} catch (error: unknown) {
 				const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 				this.showError(errorMessage);
@@ -1176,8 +1185,9 @@ export class InteractiveMode {
 		// Main interactive loop
 		while (true) {
 			const userInput = await this.getUserInput();
+			const { images, videos } = this.takeActiveUserInputAttachments();
 			try {
-				await this.session.prompt(userInput);
+				await this.session.prompt(userInput, { images, videos });
 			} catch (error: unknown) {
 				const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 				this.showError(errorMessage);
@@ -1943,8 +1953,9 @@ export class InteractiveMode {
 
 					this.chatContainer.clear();
 					this.renderInitialMessages();
-					if (result.editorText && !this.editor.getText().trim()) {
-						this.editor.setText(result.editorText);
+					if ((result.editorText || result.editorImages || result.editorVideos) && !this.editor.getText().trim()) {
+						this.editor.setText(result.editorText ?? "");
+						this.restoreQueuedAttachments(result.editorImages, result.editorVideos);
 					}
 					this.showStatus("Navigated to selected point");
 					void this.flushCompactionQueue({ willRetry: false });
@@ -2961,7 +2972,7 @@ export class InteractiveMode {
 	private setupEditorSubmitHandler(): void {
 		this.defaultEditor.onSubmit = async (text: string) => {
 			text = text.trim();
-			if (!text) return;
+			if (!text && !this.hasRestoredQueuedAttachments()) return;
 
 			// Handle commands
 			if (text === "/settings") {
@@ -3117,14 +3128,17 @@ export class InteractiveMode {
 				}
 			}
 
+			const isExtensionCommand = this.isExtensionCommand(text);
+			const { images, videos } = isExtensionCommand ? {} : this.takeRestoredQueuedAttachments();
+
 			// Queue input during compaction (extension commands execute immediately)
 			if (this.session.isCompacting) {
-				if (this.isExtensionCommand(text)) {
+				if (isExtensionCommand) {
 					this.editor.addToHistory?.(text);
 					this.editor.setText("");
-					await this.session.prompt(text);
+					await this.session.prompt(text, { images, videos });
 				} else {
-					this.queueCompactionMessage(text, "steer");
+					this.queueCompactionMessage(text, "steer", images, videos);
 				}
 				return;
 			}
@@ -3134,7 +3148,7 @@ export class InteractiveMode {
 			if (this.session.isStreaming) {
 				this.editor.addToHistory?.(text);
 				this.editor.setText("");
-				await this.session.prompt(text, { streamingBehavior: "steer" });
+				await this.session.prompt(text, { streamingBehavior: "steer", images, videos });
 				this.updatePendingMessagesDisplay();
 				this.ui.requestRender();
 				return;
@@ -3144,10 +3158,11 @@ export class InteractiveMode {
 			// First, move any pending bash components to chat
 			this.flushPendingBashComponents();
 
+			const input = { text, images, videos };
 			if (this.onInputCallback) {
-				this.onInputCallback(text);
+				this.onInputCallback(input);
 			} else {
-				this.pendingUserInputs.push(text);
+				this.pendingUserInputs.push(input);
 			}
 			this.editor.addToHistory?.(text);
 		};
@@ -3901,15 +3916,40 @@ export class InteractiveMode {
 	async getUserInput(): Promise<string> {
 		const queuedInput = this.pendingUserInputs.shift();
 		if (queuedInput !== undefined) {
-			return queuedInput;
+			this.activeUserInput = queuedInput;
+			return queuedInput.text;
 		}
 
 		return new Promise((resolve) => {
-			this.onInputCallback = (text: string) => {
+			this.onInputCallback = (input: QueuedUserInput) => {
 				this.onInputCallback = undefined;
-				resolve(text);
+				this.activeUserInput = input;
+				resolve(input.text);
 			};
 		});
+	}
+
+	private takeActiveUserInputAttachments(): { images?: ImageContent[]; videos?: VideoContent[] } {
+		const input = this.activeUserInput;
+		this.activeUserInput = undefined;
+		return { images: input?.images, videos: input?.videos };
+	}
+
+	private hasRestoredQueuedAttachments(): boolean {
+		return this.restoredQueuedImages.length > 0 || this.restoredQueuedVideos.length > 0;
+	}
+
+	private takeRestoredQueuedAttachments(): { images?: ImageContent[]; videos?: VideoContent[] } {
+		const images = this.restoredQueuedImages.length > 0 ? this.restoredQueuedImages : undefined;
+		const videos = this.restoredQueuedVideos.length > 0 ? this.restoredQueuedVideos : undefined;
+		this.restoredQueuedImages = [];
+		this.restoredQueuedVideos = [];
+		return { images, videos };
+	}
+
+	private restoreQueuedAttachments(images?: ImageContent[], videos?: VideoContent[]): void {
+		if (images) this.restoredQueuedImages.push(...images);
+		if (videos) this.restoredQueuedVideos.push(...videos);
 	}
 
 	private rebuildChatFromMessages(): void {
@@ -4117,16 +4157,19 @@ export class InteractiveMode {
 
 	private async handleFollowUp(): Promise<void> {
 		const text = (this.editor.getExpandedText?.() ?? this.editor.getText()).trim();
-		if (!text) return;
+		if (!text && !this.hasRestoredQueuedAttachments()) return;
+
+		const isExtensionCommand = this.isExtensionCommand(text);
+		const { images, videos } = isExtensionCommand ? {} : this.takeRestoredQueuedAttachments();
 
 		// Queue input during compaction (extension commands execute immediately)
 		if (this.session.isCompacting) {
-			if (this.isExtensionCommand(text)) {
+			if (isExtensionCommand) {
 				this.editor.addToHistory?.(text);
 				this.editor.setText("");
-				await this.session.prompt(text);
+				await this.session.prompt(text, { images, videos });
 			} else {
-				this.queueCompactionMessage(text, "followUp");
+				this.queueCompactionMessage(text, "followUp", images, videos);
 			}
 			return;
 		}
@@ -4136,12 +4179,13 @@ export class InteractiveMode {
 		if (this.session.isStreaming) {
 			this.editor.addToHistory?.(text);
 			this.editor.setText("");
-			await this.session.prompt(text, { streamingBehavior: "followUp" });
+			await this.session.prompt(text, { streamingBehavior: "followUp", images, videos });
 			this.updatePendingMessagesDisplay();
 			this.ui.requestRender();
 		}
 		// If not streaming, Alt+Enter acts like regular Enter (trigger onSubmit)
 		else if (this.editor.onSubmit) {
+			this.restoreQueuedAttachments(images, videos);
 			this.editor.setText("");
 			this.editor.onSubmit(text);
 		}
@@ -4343,14 +4387,19 @@ export class InteractiveMode {
 	 * Clear all queued messages and return their contents.
 	 * Clears both session queue and compaction queue.
 	 */
-	private clearAllQueues(): { steering: string[]; followUp: string[] } {
-		const { steering, followUp } = this.session.clearQueue();
+	private clearAllQueues(): { steering: QueuedUserInput[]; followUp: QueuedUserInput[] } {
+		const { steering, followUp } = this.session.clearQueueWithAttachments();
+		const toQueuedInput = ({ text, images, videos }: CompactionQueuedMessage): QueuedUserInput => ({
+			text,
+			images,
+			videos,
+		});
 		const compactionSteering = this.compactionQueuedMessages
-			.filter((msg) => msg.mode === "steer")
-			.map((msg) => msg.text);
+			.filter((message) => message.mode === "steer")
+			.map(toQueuedInput);
 		const compactionFollowUp = this.compactionQueuedMessages
-			.filter((msg) => msg.mode === "followUp")
-			.map((msg) => msg.text);
+			.filter((message) => message.mode === "followUp")
+			.map(toQueuedInput);
 		this.compactionQueuedMessages = [];
 		return {
 			steering: [...steering, ...compactionSteering],
@@ -4387,10 +4436,13 @@ export class InteractiveMode {
 			}
 			return 0;
 		}
-		const queuedText = allQueued.join("\n\n");
+		const queuedText = allQueued.map((message) => message.text).join("\n\n");
 		const currentText = options?.currentText ?? this.editor.getText();
-		const combinedText = [queuedText, currentText].filter((t) => t.trim()).join("\n\n");
+		const combinedText = [queuedText, currentText].filter((text) => text.trim()).join("\n\n");
 		this.editor.setText(combinedText);
+		for (const message of allQueued) {
+			this.restoreQueuedAttachments(message.images, message.videos);
+		}
 		this.updatePendingMessagesDisplay();
 		if (options?.abort) {
 			this.agent.abort();
@@ -4398,8 +4450,13 @@ export class InteractiveMode {
 		return allQueued.length;
 	}
 
-	private queueCompactionMessage(text: string, mode: "steer" | "followUp"): void {
-		this.compactionQueuedMessages.push({ text, mode });
+	private queueCompactionMessage(
+		text: string,
+		mode: "steer" | "followUp",
+		images?: ImageContent[],
+		videos?: VideoContent[],
+	): void {
+		this.compactionQueuedMessages.push({ text, mode, images, videos });
 		this.editor.addToHistory?.(text);
 		this.editor.setText("");
 		this.updatePendingMessagesDisplay();
@@ -4441,11 +4498,11 @@ export class InteractiveMode {
 				// When retry is pending, queue messages for the retry turn
 				for (const message of queuedMessages) {
 					if (this.isExtensionCommand(message.text)) {
-						await this.session.prompt(message.text);
+						await this.session.prompt(message.text, { images: message.images, videos: message.videos });
 					} else if (message.mode === "followUp") {
-						await this.session.followUp(message.text);
+						await this.session.followUp(message.text, message.images, message.videos);
 					} else {
-						await this.session.steer(message.text);
+						await this.session.steer(message.text, message.images, message.videos);
 					}
 				}
 				this.updatePendingMessagesDisplay();
@@ -4457,7 +4514,7 @@ export class InteractiveMode {
 			if (firstPromptIndex === -1) {
 				// All extension commands - execute them all
 				for (const message of queuedMessages) {
-					await this.session.prompt(message.text);
+					await this.session.prompt(message.text, { images: message.images, videos: message.videos });
 				}
 				return;
 			}
@@ -4468,12 +4525,16 @@ export class InteractiveMode {
 			const rest = queuedMessages.slice(firstPromptIndex + 1);
 
 			for (const message of preCommands) {
-				await this.session.prompt(message.text);
+				await this.session.prompt(message.text, { images: message.images, videos: message.videos });
 			}
 
 			// Start a prompt when idle, or queue it into a run still finishing compaction.
 			const promptPromise = this.session
-				.prompt(firstPrompt.text, { streamingBehavior: firstPrompt.mode })
+				.prompt(firstPrompt.text, {
+					streamingBehavior: firstPrompt.mode,
+					images: firstPrompt.images,
+					videos: firstPrompt.videos,
+				})
 				.catch((error) => {
 					restoreQueue(error);
 				});
@@ -4481,11 +4542,11 @@ export class InteractiveMode {
 			// Queue remaining messages
 			for (const message of rest) {
 				if (this.isExtensionCommand(message.text)) {
-					await this.session.prompt(message.text);
+					await this.session.prompt(message.text, { images: message.images, videos: message.videos });
 				} else if (message.mode === "followUp") {
-					await this.session.followUp(message.text);
+					await this.session.followUp(message.text, message.images, message.videos);
 				} else {
-					await this.session.steer(message.text);
+					await this.session.steer(message.text, message.images, message.videos);
 				}
 			}
 			this.updatePendingMessagesDisplay();
@@ -5295,8 +5356,12 @@ export class InteractiveMode {
 						// Update UI
 						this.chatContainer.clear();
 						this.renderInitialMessages();
-						if (result.editorText && !this.editor.getText().trim()) {
-							this.editor.setText(result.editorText);
+						if (
+							(result.editorText || result.editorImages || result.editorVideos) &&
+							!this.editor.getText().trim()
+						) {
+							this.editor.setText(result.editorText ?? "");
+							this.restoreQueuedAttachments(result.editorImages, result.editorVideos);
 						}
 						this.showStatus("Navigated to selected point");
 						void this.flushCompactionQueue({ willRetry: false });

@@ -1,9 +1,9 @@
-import type { ThinkingLevel } from "pi-stable-agent-core";
-import type { Transport } from "pi-stable-ai";
-import type { TuiMode as RendererTuiMode, ScrollViewScrollbar } from "pi-stable-tui";
 import { randomUUID } from "crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
+import type { ThinkingLevel } from "pi-stable-agent-core";
+import type { Transport } from "pi-stable-ai";
+import type { TuiMode as RendererTuiMode, ScrollViewScrollbar } from "pi-stable-tui";
 import lockfile from "proper-lockfile";
 import { CONFIG_DIR_NAME, getAgentDir } from "../config.ts";
 import { normalizePath, resolvePath } from "../utils/paths.ts";

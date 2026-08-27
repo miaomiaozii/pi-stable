@@ -27,6 +27,7 @@ import type {
 	Tool,
 	ToolCall,
 	Usage,
+	UserContent,
 } from "../types.ts";
 import type { AssistantMessageEventStream } from "../utils/event-stream.ts";
 import { shortHash } from "../utils/hash.ts";
@@ -76,22 +77,28 @@ type ToolResultOutputContent = Array<ResponseInputText | ResponseInputImage>;
 
 function convertToolResultOutput<TApi extends Api>(
 	model: Model<TApi>,
-	content: readonly (TextContent | ImageContent)[],
+	content: readonly UserContent[],
 ): string | ToolResultOutputContent {
 	const textResult = content
 		.filter((c): c is TextContent => c.type === "text")
 		.map((c) => c.text)
 		.join("\n");
 	const images = content.filter((c): c is ImageContent => c.type === "image");
-	const hasText = textResult.length > 0;
+	const hasVideos = content.some((c) => c.type === "video");
+	const combinedText = [
+		textResult,
+		hasVideos ? "(video omitted: OpenAI Responses serializer does not support videos)" : "",
+	]
+		.filter(Boolean)
+		.join("\n");
 
 	if (images.length === 0 || !model.input.includes("image")) {
-		return sanitizeSurrogates(hasText ? textResult : images.length > 0 ? "(see attached image)" : "(no tool output)");
+		return sanitizeSurrogates(combinedText || (images.length > 0 ? "(see attached image)" : "(no tool output)"));
 	}
 
 	const output: ToolResultOutputContent = [];
-	if (hasText) {
-		output.push({ type: "input_text", text: sanitizeSurrogates(textResult) });
+	if (combinedText) {
+		output.push({ type: "input_text", text: sanitizeSurrogates(combinedText) });
 	}
 	for (const image of images) {
 		output.push({
@@ -195,6 +202,12 @@ export function convertResponsesMessages<TApi extends Api>(
 						return {
 							type: "input_text",
 							text: sanitizeSurrogates(item.text),
+						} satisfies ResponseInputText;
+					}
+					if (item.type === "video") {
+						return {
+							type: "input_text",
+							text: "(video omitted: OpenAI Responses serializer does not support videos)",
 						} satisfies ResponseInputText;
 					}
 					return {

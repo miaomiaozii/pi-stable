@@ -31,7 +31,6 @@ import {
 	type Context,
 	calculateCost,
 	createAssistantMessageEventStream,
-	type ImageContent,
 	type Message,
 	type Model,
 	type OAuthCredentials,
@@ -43,6 +42,7 @@ import {
 	type Tool,
 	type ToolCall,
 	type ToolResultMessage,
+	type UserContent,
 } from "pi-stable-ai";
 
 // =============================================================================
@@ -187,16 +187,19 @@ function sanitizeSurrogates(text: string): string {
 }
 
 function convertContentBlocks(
-	content: (TextContent | ImageContent)[],
+	content: UserContent[],
 ): string | Array<{ type: "text"; text: string } | { type: "image"; source: any }> {
-	const hasImages = content.some((c) => c.type === "image");
-	if (!hasImages) {
-		return sanitizeSurrogates(content.map((c) => (c as TextContent).text).join("\n"));
+	const hasMedia = content.some((block) => block.type !== "text");
+	if (!hasMedia) {
+		return sanitizeSurrogates(content.map((block) => (block.type === "text" ? block.text : "")).join("\n"));
 	}
 
 	const blocks = content.map((block) => {
 		if (block.type === "text") {
 			return { type: "text" as const, text: sanitizeSurrogates(block.text) };
+		}
+		if (block.type === "video") {
+			return { type: "text" as const, text: "(video omitted: Anthropic serializer does not support videos)" };
 		}
 		return {
 			type: "image" as const,
@@ -227,14 +230,20 @@ function convertMessages(messages: Message[], isOAuth: boolean, _tools?: Tool[])
 					params.push({ role: "user", content: sanitizeSurrogates(msg.content) });
 				}
 			} else {
-				const blocks: ContentBlockParam[] = msg.content.map((item) =>
-					item.type === "text"
-						? { type: "text" as const, text: sanitizeSurrogates(item.text) }
-						: {
-								type: "image" as const,
-								source: { type: "base64" as const, media_type: item.mimeType as any, data: item.data },
-							},
-				);
+				const blocks: ContentBlockParam[] = msg.content.map((item) => {
+					if (item.type === "text") return { type: "text", text: sanitizeSurrogates(item.text) };
+					if (item.type === "video") {
+						return { type: "text", text: "(video omitted: Anthropic serializer does not support videos)" };
+					}
+					return {
+						type: "image",
+						source: {
+							type: "base64",
+							media_type: item.mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+							data: item.data,
+						},
+					};
+				});
 				if (blocks.length > 0) {
 					params.push({ role: "user", content: blocks });
 				}

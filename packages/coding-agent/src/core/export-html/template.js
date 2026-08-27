@@ -909,7 +909,10 @@
         const getResultText = () => {
           if (!result) return '';
           const textBlocks = result.content.filter(c => c.type === 'text');
-          return textBlocks.map(c => c.text).join('\n');
+          const videoBlocks = result.content.filter(c => c.type === 'video');
+          const parts = textBlocks.map(c => c.text);
+          parts.push(...videoBlocks.map(video => `[Video: ${video.mimeType || 'video/unknown'}]`));
+          return parts.join('\n');
         };
 
         const getResultImages = () => {
@@ -1187,9 +1190,10 @@
             const skillBlock = parseSkillBlock(text);
 
             if (skillBlock) {
-              // Collect images from content array
+              // Collect media from content array
               const images = Array.isArray(content) ? content.filter(c => c.type === 'image') : [];
-              const hasUserContent = skillBlock.userMessage || images.length > 0;
+              const videos = Array.isArray(content) ? content.filter(c => c.type === 'video') : [];
+              const hasUserContent = skillBlock.userMessage || images.length > 0 || videos.length > 0;
               let html = `<div class="skill-user-entry" id="${entryDomId}">${copyBtnHtml}${tsHtml}`;
 
               // Skill invocation (collapsed by default, click to expand)
@@ -1209,6 +1213,13 @@
                   }
                   html += '</div>';
                 }
+                if (videos.length > 0) {
+                  html += '<div class="message-videos">';
+                  for (const video of videos) {
+                    html += `<div class="message-video">[Video: ${escapeHtml(video.mimeType || 'video/unknown')}]</div>`;
+                  }
+                  html += '</div>';
+                }
                 if (skillBlock.userMessage) {
                   html += `<div class="markdown-content">${safeMarkedParse(skillBlock.userMessage)}</div>`;
                 }
@@ -1224,10 +1235,18 @@
 
             if (Array.isArray(content)) {
               const images = content.filter(c => c.type === 'image');
+              const videos = content.filter(c => c.type === 'video');
               if (images.length > 0) {
                 html += '<div class="message-images">';
                 for (const img of images) {
                   html += `<img src="data:${escapeHtml(img.mimeType || 'image/png')};base64,${escapeHtml(img.data || '')}" class="message-image" />`;
+                }
+                html += '</div>';
+              }
+              if (videos.length > 0) {
+                html += '<div class="message-videos">';
+                for (const video of videos) {
+                  html += `<div class="message-video">[Video: ${escapeHtml(video.mimeType || 'video/unknown')}]</div>`;
                 }
                 html += '</div>';
               }
