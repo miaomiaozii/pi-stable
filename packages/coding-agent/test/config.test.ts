@@ -148,12 +148,12 @@ function createFakeBunScript(bunBin: string): string {
 describe("detectInstallMethod", () => {
 	test("detects pnpm from Windows .pnpm install paths", () => {
 		setExecPath(
-			"C:\\Users\\Admin\\Documents\\pnpm-repository\\global\\5\\.pnpm\\pi-stable-@0.67.68\\node_modules\\pi-stable\\dist\\cli.js",
+			"C:\\Users\\Admin\\Documents\\pnpm-repository\\global\\5\\.pnpm\\@earendil-works/pi-coding-agent-@0.67.68\\node_modules\\@earendil-works/pi-coding-agent\\dist\\cli.js",
 		);
 
 		expect(detectInstallMethod()).toBe("pnpm");
-		expect(getUpdateInstruction("pi-stable")).toBe(
-			"Run: pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 pi-stable",
+		expect(getUpdateInstruction("@earendil-works/pi-coding-agent")).toBe(
+			"Run: pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @earendil-works/pi-coding-agent",
 		);
 	});
 
@@ -161,37 +161,37 @@ describe("detectInstallMethod", () => {
 		setExecPath("/usr/local/bin/node");
 
 		expect(detectInstallMethod()).toBe("unknown");
-		expect(getSelfUpdateCommand("pi-stable")).toBeUndefined();
-		expect(getUpdateInstruction("pi-stable")).toBe(
-			"Update pi-stable using the package manager, wrapper, or source checkout that provides this installation.",
+		expect(getSelfUpdateCommand("@earendil-works/pi-coding-agent")).toBeUndefined();
+		expect(getUpdateInstruction("@earendil-works/pi-coding-agent")).toBe(
+			"Update @earendil-works/pi-coding-agent using the package manager, wrapper, or source checkout that provides this installation.",
 		);
 	});
 
 	test("self-updates npm installs from custom prefixes", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("pi-stable");
+		const command = getSelfUpdateCommand("@earendil-works/pi-coding-agent");
 
 		expect(detectInstallMethod()).toBe("npm");
 		expect(command).toEqual({
 			command: "npm",
-			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "pi-stable"],
-			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 pi-stable`,
+			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "@earendil-works/pi-coding-agent"],
+			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @earendil-works/pi-coding-agent`,
 		});
 	});
 
 	test("self-updates exact npm versions without uninstalling the current package", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("pi-stable", undefined, {
-			packageName: "pi-stable",
-			installSpec: "pi-stable@1.2.3",
+		const command = getSelfUpdateCommand("@earendil-works/pi-coding-agent", undefined, {
+			packageName: "@earendil-works/pi-coding-agent",
+			installSpec: "@earendil-works/pi-coding-agent@1.2.3",
 		});
 
 		expect(command).toEqual({
 			command: "npm",
-			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "pi-stable@1.2.3"],
-			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 pi-stable@1.2.3`,
+			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "@earendil-works/pi-coding-agent@1.2.3"],
+			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @earendil-works/pi-coding-agent@1.2.3`,
 		});
 	});
 
@@ -222,19 +222,19 @@ describe("detectInstallMethod", () => {
 	test("self-update respects configured npmCommand", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("pi-stable", ["npm", "--prefix", prefix]);
+		const command = getSelfUpdateCommand("@earendil-works/pi-coding-agent", ["npm", "--prefix", prefix]);
 
 		expect(command).toEqual({
 			command: "npm",
-			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "pi-stable"],
-			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 pi-stable`,
+			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "@earendil-works/pi-coding-agent"],
+			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @earendil-works/pi-coding-agent`,
 		});
 	});
 
 	test("self-update treats empty npmCommand as unset", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("pi-stable", []);
+		const command = getSelfUpdateCommand("@earendil-works/pi-coding-agent", []);
 
 		expect(command?.args).toEqual([
 			"--prefix",
@@ -243,41 +243,41 @@ describe("detectInstallMethod", () => {
 			"-g",
 			"--ignore-scripts",
 			"--min-release-age=0",
-			"pi-stable",
+			"@earendil-works/pi-coding-agent",
 		]);
 	});
 
 	test("quotes npm self-update display paths", () => {
 		const { prefix } = createNpmPrefixInstall("pi prefix ");
 
-		const command = getSelfUpdateCommand("pi-stable");
+		const command = getSelfUpdateCommand("@earendil-works/pi-coding-agent");
 
 		expect(command?.display).toBe(
-			`npm --prefix "${prefix}" install -g --ignore-scripts --min-release-age=0 pi-stable`,
+			`npm --prefix "${prefix}" install -g --ignore-scripts --min-release-age=0 @earendil-works/pi-coding-agent`,
 		);
 	});
 
 	test("does not infer Windows npm custom prefixes from package paths", () => {
-		const packageDir = "C:\\Users\\Admin\\npm prefix\\node_modules\\pi-stable";
+		const packageDir = "C:\\Users\\Admin\\npm prefix\\node_modules\\@earendil-works/pi-coding-agent";
 		process.env.PI_PACKAGE_DIR = packageDir;
 		setExecPath(`${packageDir}\\dist\\cli.js`);
 
 		expect(detectInstallMethod()).toBe("npm");
-		expect(getUpdateInstruction("pi-stable")).toBe(
-			"Run: npm install -g --ignore-scripts --min-release-age=0 pi-stable",
+		expect(getUpdateInstruction("@earendil-works/pi-coding-agent")).toBe(
+			"Run: npm install -g --ignore-scripts --min-release-age=0 @earendil-works/pi-coding-agent",
 		);
 	});
 
 	test("self-updates bun global installs from bun pm bin", () => {
 		createBunGlobalInstall();
 
-		const command = getSelfUpdateCommand("pi-stable");
+		const command = getSelfUpdateCommand("@earendil-works/pi-coding-agent");
 
 		expect(detectInstallMethod()).toBe("bun");
 		expect(command).toEqual({
 			command: "bun",
-			args: ["install", "-g", "--ignore-scripts", "--minimum-release-age=0", "pi-stable"],
-			display: "bun install -g --ignore-scripts --minimum-release-age=0 pi-stable",
+			args: ["install", "-g", "--ignore-scripts", "--minimum-release-age=0", "@earendil-works/pi-coding-agent"],
+			display: "bun install -g --ignore-scripts --minimum-release-age=0 @earendil-works/pi-coding-agent",
 		});
 	});
 
@@ -311,8 +311,8 @@ describe("detectInstallMethod", () => {
 		const temp = mkdtempSync(join(tmpdir(), "pi-pnpm11-"));
 		const binDir = join(temp, "bin");
 		const root = join(temp, "Library", "pnpm", "global", "v11");
-		const packageName = "pi-stable";
-		const globalPackageDir = join(root, "11e9a", "node_modules", "pi-stable");
+		const packageName = "@earendil-works/pi-coding-agent";
+		const globalPackageDir = join(root, "11e9a", "node_modules", "@earendil-works/pi-coding-agent");
 		const storePackageDir = join(
 			temp,
 			"Library",
@@ -405,7 +405,7 @@ describe("detectInstallMethod", () => {
 		const { packageDir } = createNpmPrefixInstall();
 		chmodSync(packageDir, 0o500);
 
-		expect(getSelfUpdateCommand("pi-stable")).toBeUndefined();
-		expect(getSelfUpdateUnavailableInstruction("pi-stable")).toContain("the install path is not writable");
+		expect(getSelfUpdateCommand("@earendil-works/pi-coding-agent")).toBeUndefined();
+		expect(getSelfUpdateUnavailableInstruction("@earendil-works/pi-coding-agent")).toContain("the install path is not writable");
 	});
 });

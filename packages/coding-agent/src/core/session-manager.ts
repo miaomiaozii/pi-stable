@@ -13,8 +13,8 @@ import {
 } from "fs";
 import { readdir, stat } from "fs/promises";
 import { join, resolve } from "path";
-import type { AgentMessage } from "pi-stable-agent-core";
-import { type ImageContent, type Message, type TextContent, type Usage, uuidv7 } from "pi-stable-ai";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import { type ImageContent, type Message, type TextContent, type Usage, uuidv7 } from "@earendil-works/pi-ai";
 import { createInterface } from "readline";
 import { StringDecoder } from "string_decoder";
 import { getAgentDir as getDefaultAgentDir, getSessionsDir } from "../config.ts";

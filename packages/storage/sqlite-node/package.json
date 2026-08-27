@@ -1,7 +1,7 @@
 {
-	"name": "pi-stable-storage-sqlite-node",
+	"name": "@earendil-works/pi-storage-sqlite-node",
 	"version": "0.83.6",
-	"description": "Node sqlite storage backend for pi-stable-agent-core sessions",
+	"description": "Node sqlite storage backend for @earendil-works/pi-agent-core sessions",
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -25,14 +25,14 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ranxianglei/pi-stable.git",
+		"url": "https://github.com/ranxianglei/@earendil-works/pi-coding-agent.git",
 		"directory": "packages/storage/sqlite-node"
 	},
 	"engines": {
 		"node": ">=22.19.0"
 	},
 	"dependencies": {
-		"pi-stable-ai": "0.83.6",
-		"pi-stable-agent-core": "0.83.6"
+		"@earendil-works/pi-ai": "0.83.6",
+		"@earendil-works/pi-agent-core": "0.83.6"
 	}
 }

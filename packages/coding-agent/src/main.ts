@@ -7,7 +7,7 @@
 
 import { createInterface } from "node:readline";
 import chalk from "chalk";
-import { type ImageContent, modelsAreEqual } from "pi-stable-ai";
+import { type ImageContent, modelsAreEqual } from "@earendil-works/pi-ai";
 import { type Args, type Mode, parseArgs, printHelp } from "./cli/args.ts";
 import {
 	type CredentialPrintCommand,

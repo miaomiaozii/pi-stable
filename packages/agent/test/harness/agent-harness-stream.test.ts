@@ -5,7 +5,7 @@ import {
 	fauxProvider,
 	fauxToolCall,
 	type StreamOptions,
-} from "pi-stable-ai";
+} from "@earendil-works/pi-ai";
 import { describe, expect, it } from "vitest";
 import { AgentHarness } from "../../src/harness/agent-harness.ts";
 import { InMemorySessionStorage } from "../../src/harness/session/memory-storage.ts";

@@ -6,8 +6,8 @@ import {
 	fauxToolCall,
 	type RegisterFauxProviderOptions,
 	type Usage,
-} from "pi-stable-ai";
-import { getModel } from "pi-stable-ai/compat";
+} from "@earendil-works/pi-ai";
+import { getModel } from "@earendil-works/pi-ai/compat";
 import { describe, expect, it } from "vitest";
 import { AgentHarness } from "../../src/harness/agent-harness.ts";
 import { NodeExecutionEnv } from "../../src/harness/env/nodejs.ts";

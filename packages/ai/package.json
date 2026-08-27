@@ -1,5 +1,5 @@
 {
-	"name": "pi-stable-ai",
+	"name": "@earendil-works/pi-ai",
 	"version": "0.83.6",
 	"description": "Unified LLM API with automatic model discovery and provider configuration",
 	"type": "module",
@@ -86,7 +86,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ranxianglei/pi-stable.git",
+		"url": "https://github.com/ranxianglei/@earendil-works/pi-coding-agent.git",
 		"directory": "packages/ai"
 	},
 	"engines": {

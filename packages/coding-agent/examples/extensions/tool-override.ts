@@ -23,8 +23,8 @@
 import { constants, readFileSync } from "fs";
 import { access, appendFile, readFile } from "fs/promises";
 import { join, resolve } from "path";
-import { type ExtensionAPI, getAgentDir, withFileMutationQueue } from "pi-stable";
-import type { TextContent } from "pi-stable-ai";
+import { type ExtensionAPI, getAgentDir, withFileMutationQueue } from "@earendil-works/pi-coding-agent";
+import type { TextContent } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 
 const LOG_FILE = join(getAgentDir(), "read-access.log");

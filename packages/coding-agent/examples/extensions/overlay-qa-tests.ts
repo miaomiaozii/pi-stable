@@ -20,9 +20,9 @@
  */
 
 import { spawn } from "child_process";
-import type { ExtensionAPI, ExtensionCommandContext, Theme } from "pi-stable";
-import type { Component, OverlayAnchor, OverlayHandle, OverlayOptions, TUI } from "pi-stable-tui";
-import { Input, matchesKey, truncateToWidth, visibleWidth } from "pi-stable-tui";
+import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@earendil-works/pi-coding-agent";
+import type { Component, OverlayAnchor, OverlayHandle, OverlayOptions, TUI } from "@earendil-works/pi-tui";
+import { Input, matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 // Global handle for toggle demo (in real code, use a more elegant pattern)
 let globalToggleHandle: OverlayHandle | null = null;

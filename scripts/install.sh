@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# pi-stable binary installer
+# @earendil-works/pi-coding-agent binary installer
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/ranxianglei/pi-stable/master/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/ranxianglei/@earendil-works/pi-coding-agent/master/scripts/install.sh | bash
 #
-# Downloads the latest pi-stable binary for the current OS/arch and installs it
-# to ~/.local/bin/pi-stable. No Node.js required.
+# Downloads the latest @earendil-works/pi-coding-agent binary for the current OS/arch and installs it
+# to ~/.local/bin/@earendil-works/pi-coding-agent. No Node.js required.
 set -euo pipefail
 
-REPO="ranxianglei/pi-stable"
+REPO="ranxianglei/@earendil-works/pi-coding-agent"
 INSTALL_DIR="${PI_STABLE_INSTALL_DIR:-$HOME/.local/bin}"
-BINARY_NAME="pi-stable"
+BINARY_NAME="@earendil-works/pi-coding-agent"
 
 # --- detect latest tag ---
-echo "==> Fetching latest pi-stable release..."
+echo "==> Fetching latest @earendil-works/pi-coding-agent release..."
 if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
   TAG="$(gh release view --repo "${REPO}" --json tagName --jq .tagName 2>/dev/null || true)"
 fi
@@ -21,7 +21,7 @@ if [[ -z "${TAG:-}" ]]; then
   TAG="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep -m1 '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')"
 fi
 if [[ -z "${TAG:-}" ]]; then
-  echo "::error::Could not determine latest pi-stable release tag." >&2
+  echo "::error::Could not determine latest @earendil-works/pi-coding-agent release tag." >&2
   exit 1
 fi
 echo "==> Latest release: ${TAG}"
@@ -34,7 +34,7 @@ case "${OS}/${ARCH}" in
   Darwin/x86_64)  PLATFORM="darwin-x64" ;;
   Linux/x86_64)   PLATFORM="linux-x64" ;;
   Linux/aarch64|Linux/arm64) PLATFORM="linux-arm64" ;;
-  MINGW*|MSYS*|CYGWIN*/x86_64) PLATFORM="windows-x64"; BINARY_NAME="pi-stable.exe"; INSTALL_DIR="${PI_STABLE_INSTALL_DIR:-$USERPROFILE/.local/bin}" ;;
+  MINGW*|MSYS*|CYGWIN*/x86_64) PLATFORM="windows-x64"; BINARY_NAME="@earendil-works/pi-coding-agent.exe"; INSTALL_DIR="${PI_STABLE_INSTALL_DIR:-$USERPROFILE/.local/bin}" ;;
   *) echo "::error::Unsupported platform: ${OS}/${ARCH}" >&2; exit 1 ;;
 esac
 echo "==> Platform: ${PLATFORM}"
@@ -44,7 +44,7 @@ case "${PLATFORM}" in
   windows-*) EXT="zip" ;;
   *)         EXT="tar.gz" ;;
 esac
-ASSET="pi-stable-${PLATFORM}.${EXT}"
+ASSET="@earendil-works/pi-coding-agent-${PLATFORM}.${EXT}"
 URL="https://github.com/${REPO}/releases/download/${TAG}/${ASSET}"
 echo "==> Downloading ${ASSET}..."
 
@@ -71,7 +71,7 @@ esac
 # --- locate binary (may be in a wrapper dir) ---
 BIN_FOUND="$(find "${TMP}/out" -type f -name "${BINARY_NAME}" -perm -u+x | head -1)"
 if [[ -z "${BIN_FOUND}" ]]; then
-  # On Windows/unix the binary may be at out/pi-stable or out/<platform>/pi-stable
+  # On Windows/unix the binary may be at out/@earendil-works/pi-coding-agent or out/<platform>/@earendil-works/pi-coding-agent
   BIN_FOUND="$(find "${TMP}/out" -type f -name "${BINARY_NAME}" | head -1)"
 fi
 if [[ -z "${BIN_FOUND}" ]]; then

@@ -1,4 +1,4 @@
-import { InMemoryModelsStore } from "pi-stable-ai";
+import { InMemoryModelsStore } from "@earendil-works/pi-ai";
 import { describe, expect, test, vi } from "vitest";
 import { parseArgs } from "../src/cli/args.ts";
 import {

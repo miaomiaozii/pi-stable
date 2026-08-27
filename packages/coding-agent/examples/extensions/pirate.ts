@@ -10,7 +10,7 @@
  * 3. When enabled, the agent will respond like a pirate
  */
 
-import type { ExtensionAPI } from "pi-stable";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 export default function pirateExtension(pi: ExtensionAPI) {
 	let pirateMode = false;

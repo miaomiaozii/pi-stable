@@ -145,9 +145,9 @@ for platform in "${PLATFORMS[@]}"; do
     # explicit build entrypoints. The runtime can still use new URL(...), but the
     # worker must be present in the compiled executable.
     if [[ "$platform" == windows-* ]]; then
-        bun build --compile --target=bun-$platform ./dist/bun/cli.js ./src/utils/image-resize-worker.ts --outfile "$OUTPUT_DIR/$platform/pi-stable.exe"
+        bun build --compile --target=bun-$platform ./dist/bun/cli.js ./src/utils/image-resize-worker.ts --outfile "$OUTPUT_DIR/$platform/@earendil-works/pi-coding-agent.exe"
     else
-        bun build --compile --target=bun-$platform ./dist/bun/cli.js ./src/utils/image-resize-worker.ts --outfile "$OUTPUT_DIR/$platform/pi-stable"
+        bun build --compile --target=bun-$platform ./dist/bun/cli.js ./src/utils/image-resize-worker.ts --outfile "$OUTPUT_DIR/$platform/@earendil-works/pi-coding-agent"
     fi
 done
 
@@ -221,12 +221,12 @@ cd "$OUTPUT_DIR"
 for platform in "${PLATFORMS[@]}"; do
     if [[ "$platform" == windows-* ]]; then
         # Windows (zip)
-        echo "Creating pi-stable-$platform.zip..."
-        (cd "$platform" && zip -r ../pi-stable-$platform.zip .)
+        echo "Creating @earendil-works/pi-coding-agent-$platform.zip..."
+        (cd "$platform" && zip -r ../@earendil-works/pi-coding-agent-$platform.zip .)
     else
         # Unix platforms (tar.gz) - use wrapper directory for mise compatibility
-        echo "Creating pi-stable-$platform.tar.gz..."
-        mv "$platform" pi-stable && tar -czf pi-stable-$platform.tar.gz pi-stable && mv pi-stable "$platform"
+        echo "Creating @earendil-works/pi-coding-agent-$platform.tar.gz..."
+        mv "$platform" @earendil-works/pi-coding-agent && tar -czf @earendil-works/pi-coding-agent-$platform.tar.gz @earendil-works/pi-coding-agent && mv @earendil-works/pi-coding-agent "$platform"
     fi
 done
 
@@ -235,9 +235,9 @@ echo "==> Extracting archives for testing..."
 for platform in "${PLATFORMS[@]}"; do
     rm -rf "$platform"
     if [[ "$platform" == windows-* ]]; then
-        mkdir -p "$platform" && (cd "$platform" && unzip -q ../pi-stable-$platform.zip)
+        mkdir -p "$platform" && (cd "$platform" && unzip -q ../@earendil-works/pi-coding-agent-$platform.zip)
     else
-        tar -xzf pi-stable-$platform.tar.gz && mv pi-stable "$platform"
+        tar -xzf @earendil-works/pi-coding-agent-$platform.tar.gz && mv @earendil-works/pi-coding-agent "$platform"
     fi
 done
 

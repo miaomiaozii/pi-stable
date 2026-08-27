@@ -18,7 +18,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { execSync } from "child_process";
 import { tmpdir } from "os";
 import { join } from "path";
-import type { ExtensionAPI } from "pi-stable";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
 	DEFAULT_MAX_BYTES,
 	DEFAULT_MAX_LINES,
@@ -26,8 +26,8 @@ import {
 	type TruncationResult,
 	truncateHead,
 	withFileMutationQueue,
-} from "pi-stable";
-import { Text } from "pi-stable-tui";
+} from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 const RgParams = Type.Object({

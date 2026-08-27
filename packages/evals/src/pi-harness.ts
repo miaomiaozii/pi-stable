@@ -10,8 +10,8 @@ import {
 	ModelRuntime,
 	SessionManager,
 	SettingsManager,
-} from "pi-stable";
-import { contentText } from "pi-stable-ai";
+} from "@earendil-works/pi-coding-agent";
+import { contentText } from "@earendil-works/pi-ai";
 import {
 	createHarness,
 	type Harness,

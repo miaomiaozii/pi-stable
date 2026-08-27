@@ -1,4 +1,4 @@
-import { fauxAssistantMessage } from "pi-stable-ai";
+import { fauxAssistantMessage } from "@earendil-works/pi-ai";
 import { describe, expect, it } from "vitest";
 import { userMsg } from "../../utilities.ts";
 import { createHarness } from "../harness.ts";

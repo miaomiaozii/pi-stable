@@ -1,18 +1,18 @@
 name: Build Binaries
 
-# Builds cross-platform pi-stable binaries and publishes them to a GitHub Release.
-# Triggered by the same tag pushes that trigger npm publishing (publish-pi-stable.yml).
+# Builds cross-platform @earendil-works/pi-coding-agent binaries and publishes them to a GitHub Release.
+# Triggered by the same tag pushes that trigger npm publishing (publish-@earendil-works/pi-coding-agent.yml).
 # This workflow is binary-only; npm packages are handled separately.
 #
 # Outputs (per tag v0.83.2):
-#   pi-stable-darwin-arm64.tar.gz    (mac Apple Silicon)
-#   pi-stable-darwin-x64.tar.gz      (mac Intel)
-#   pi-stable-linux-x64.tar.gz
-#   pi-stable-linux-arm64.tar.gz
-#   pi-stable-windows-x64.zip
-#   pi-stable-windows-arm64.zip
+#   @earendil-works/pi-coding-agent-darwin-arm64.tar.gz    (mac Apple Silicon)
+#   @earendil-works/pi-coding-agent-darwin-x64.tar.gz      (mac Intel)
+#   @earendil-works/pi-coding-agent-linux-x64.tar.gz
+#   @earendil-works/pi-coding-agent-linux-arm64.tar.gz
+#   @earendil-works/pi-coding-agent-windows-x64.zip
+#   @earendil-works/pi-coding-agent-windows-arm64.zip
 #   SHA256SUMS
-#   pi-stable-<version>-source.tar.gz
+#   @earendil-works/pi-coding-agent-<version>-source.tar.gz
 
 on:
   push:
@@ -86,12 +86,12 @@ jobs:
 
           # Verify expected archives exist
           binary_assets=(
-            pi-stable-darwin-arm64.tar.gz
-            pi-stable-darwin-x64.tar.gz
-            pi-stable-linux-x64.tar.gz
-            pi-stable-linux-arm64.tar.gz
-            pi-stable-windows-x64.zip
-            pi-stable-windows-arm64.zip
+            @earendil-works/pi-coding-agent-darwin-arm64.tar.gz
+            @earendil-works/pi-coding-agent-darwin-x64.tar.gz
+            @earendil-works/pi-coding-agent-linux-x64.tar.gz
+            @earendil-works/pi-coding-agent-linux-arm64.tar.gz
+            @earendil-works/pi-coding-agent-windows-x64.zip
+            @earendil-works/pi-coding-agent-windows-arm64.zip
           )
           for asset in "${binary_assets[@]}"; do
             test -f "${asset}"
@@ -101,13 +101,13 @@ jobs:
 
           cd "${GITHUB_WORKSPACE}/release-assets"
           sha256sum "${binary_assets[@]}" > SHA256SUMS
-          echo "## pi-stable v${VERSION}" > RELEASE_NOTES.md
+          echo "## @earendil-works/pi-coding-agent v${VERSION}" > RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
           echo "Cross-platform binaries. No Node.js required." >> RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
           echo "Install via:" >> RELEASE_NOTES.md
           echo "\`\`\`bash" >> RELEASE_NOTES.md
-          echo "curl -fsSL https://raw.githubusercontent.com/ranxianglei/pi-stable/master/scripts/install.sh | bash" >> RELEASE_NOTES.md
+          echo "curl -fsSL https://raw.githubusercontent.com/ranxianglei/@earendil-works/pi-coding-agent/master/scripts/install.sh | bash" >> RELEASE_NOTES.md
           echo "\`\`\`" >> RELEASE_NOTES.md
           ls -lh
 
@@ -154,18 +154,18 @@ jobs:
           gh release delete "${RELEASE_TAG}" --yes --cleanup-tag 2>/dev/null || true
 
           assets=(
-            pi-stable-darwin-arm64.tar.gz
-            pi-stable-darwin-x64.tar.gz
-            pi-stable-linux-x64.tar.gz
-            pi-stable-linux-arm64.tar.gz
-            pi-stable-windows-x64.zip
-            pi-stable-windows-arm64.zip
+            @earendil-works/pi-coding-agent-darwin-arm64.tar.gz
+            @earendil-works/pi-coding-agent-darwin-x64.tar.gz
+            @earendil-works/pi-coding-agent-linux-x64.tar.gz
+            @earendil-works/pi-coding-agent-linux-arm64.tar.gz
+            @earendil-works/pi-coding-agent-windows-x64.zip
+            @earendil-works/pi-coding-agent-windows-arm64.zip
             SHA256SUMS
             RELEASE_NOTES.md
           )
 
           gh release create "${RELEASE_TAG}" \
-            --title "pi-stable ${RELEASE_TAG}" \
+            --title "@earendil-works/pi-coding-agent ${RELEASE_TAG}" \
             --notes-file RELEASE_NOTES.md \
             --verify-tag \
             "${assets[@]}"

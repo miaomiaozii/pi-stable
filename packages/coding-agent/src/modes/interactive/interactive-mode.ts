@@ -9,9 +9,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import chalk from "chalk";
 import { spawn, spawnSync } from "child_process";
-import type { AgentMessage } from "pi-stable-agent-core";
-import type { AuthEvent, AuthPrompt } from "pi-stable-ai";
-import type { AssistantMessage, ImageContent, Message, Model } from "pi-stable-ai/compat";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import type { AuthEvent, AuthPrompt } from "@earendil-works/pi-ai";
+import type { AssistantMessage, ImageContent, Message, Model } from "@earendil-works/pi-ai/compat";
 import type {
 	AutocompleteItem,
 	AutocompleteProvider,
@@ -22,7 +22,7 @@ import type {
 	OverlayHandle,
 	OverlayOptions,
 	SlashCommand,
-} from "pi-stable-tui";
+} from "@earendil-works/pi-tui";
 import {
 	CombinedAutocompleteProvider,
 	type Component,
@@ -39,7 +39,7 @@ import {
 	TruncatedText,
 	TUI,
 	visibleWidth,
-} from "pi-stable-tui";
+} from "@earendil-works/pi-tui";
 import {
 	APP_NAME,
 	APP_TITLE,

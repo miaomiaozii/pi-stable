@@ -4,7 +4,7 @@ import type {
 	RpcExtensionUIRequest,
 	RpcExtensionUIResponse,
 	RpcResponse,
-} from "pi-stable";
+} from "@earendil-works/pi-coding-agent";
 import type { InstanceStatus } from "../types.ts";
 
 export interface SpawnRequest {

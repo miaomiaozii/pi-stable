@@ -1,5 +1,5 @@
 import { existsSync } from "fs";
-import { ProcessTerminal, setKeybindings, TUI } from "pi-stable-tui";
+import { ProcessTerminal, setKeybindings, TUI } from "@earendil-works/pi-tui";
 import { APP_NAME, CONFIG_DIR_NAME, ENV_AGENT_DIR, getAgentDir, getSettingsPath, PACKAGE_NAME } from "../config.ts";
 import { areExperimentalFeaturesEnabled } from "../core/experimental.ts";
 import { KeybindingsManager } from "../core/keybindings.ts";
@@ -23,7 +23,7 @@ import {
 	type Theme,
 } from "../modes/interactive/theme/theme.ts";
 
-const OFFICIAL_PACKAGE_NAME = "pi-stable";
+const OFFICIAL_PACKAGE_NAME = "@earendil-works/pi-coding-agent";
 const OFFICIAL_APP_NAME = "pi";
 const OFFICIAL_CONFIG_DIR_NAME = ".pi";
 

@@ -1,5 +1,5 @@
 {
-	"name": "pi-stable-tui",
+	"name": "@earendil-works/pi-tui",
 	"version": "0.83.6",
 	"description": "Terminal User Interface library with differential rendering for efficient text-based applications",
 	"type": "module",
@@ -29,7 +29,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ranxianglei/pi-stable.git",
+		"url": "https://github.com/ranxianglei/@earendil-works/pi-coding-agent.git",
 		"directory": "packages/tui"
 	},
 	"engines": {

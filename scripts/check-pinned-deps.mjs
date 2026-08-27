@@ -22,7 +22,7 @@ function collectPackageJsonFiles(directory) {
 }
 
 function isInternalWorkspaceDependency(name) {
-	return name.startsWith("pi-stable-");
+	return name.startsWith("@earendil-works/pi-coding-agent-");
 }
 
 function isNonRegistrySpecifier(specifier) {

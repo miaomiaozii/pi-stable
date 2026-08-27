@@ -5,7 +5,7 @@
 
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
-import type { Credential, CredentialInfo, CredentialStore } from "pi-stable-ai";
+import type { Credential, CredentialInfo, CredentialStore } from "@earendil-works/pi-ai";
 import lockfile from "proper-lockfile";
 import { getAgentDir } from "../config.ts";
 import { normalizePath } from "../utils/paths.ts";

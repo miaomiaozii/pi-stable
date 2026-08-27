@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import chalk from "chalk";
-import { Markdown, type MarkdownTheme } from "pi-stable-tui";
+import { Markdown, type MarkdownTheme } from "@earendil-works/pi-tui";
 import { selectConfig } from "./cli/config-selector.ts";
 import { createProjectTrustContext } from "./cli/project-trust.ts";
 import {

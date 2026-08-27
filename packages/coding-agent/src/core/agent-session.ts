@@ -23,8 +23,8 @@ import type {
 	AgentTool,
 	PrepareNextTurnContext,
 	ThinkingLevel,
-} from "pi-stable-agent-core";
-import { contentText } from "pi-stable-ai";
+} from "@earendil-works/pi-agent-core";
+import { contentText } from "@earendil-works/pi-ai";
 import type {
 	AssistantMessage,
 	AuthResult,
@@ -33,7 +33,7 @@ import type {
 	ProviderHeaders,
 	TextContent,
 	Usage,
-} from "pi-stable-ai/compat";
+} from "@earendil-works/pi-ai/compat";
 import {
 	clampThinkingLevel,
 	cleanupSessionResources,
@@ -44,7 +44,7 @@ import {
 	type RetryCallbacks,
 	resetApiProviders,
 	streamSimple,
-} from "pi-stable-ai/compat";
+} from "@earendil-works/pi-ai/compat";
 import { getThemeByName, theme } from "../modes/interactive/theme/theme.ts";
 import { stripFrontmatter } from "../utils/frontmatter.ts";
 import { resolvePath } from "../utils/paths.ts";

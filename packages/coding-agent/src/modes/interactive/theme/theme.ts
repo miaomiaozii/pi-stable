@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import chalk from "chalk";
-import type { ThinkingLevel } from "pi-stable-agent-core";
+import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import {
 	type EditorTheme,
 	getCapabilities,
@@ -9,7 +9,7 @@ import {
 	type RgbColor,
 	type SelectListTheme,
 	type SettingsListTheme,
-} from "pi-stable-tui";
+} from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 import { Compile } from "typebox/compile";
 import { getCustomThemesDir, getThemesDir } from "../../../config.ts";
@@ -797,7 +797,7 @@ export function getDefaultTheme(): string {
 // ============================================================================
 
 // Use globalThis to share theme across module loaders (tsx + jiti in dev mode)
-const THEME_KEY = Symbol.for("pi-stable:theme");
+const THEME_KEY = Symbol.for("@earendil-works/pi-coding-agent:theme");
 const THEME_KEY_OLD = Symbol.for("@mariozechner/pi-coding-agent:theme");
 
 // Export theme as a getter that reads from globalThis

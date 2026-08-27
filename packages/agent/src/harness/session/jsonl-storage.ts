@@ -1,4 +1,4 @@
-import { uuidv7 } from "pi-stable-ai";
+import { uuidv7 } from "@earendil-works/pi-ai";
 import type {
 	FileSystem,
 	JsonlSessionMetadata,

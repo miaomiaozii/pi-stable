@@ -6,8 +6,8 @@
 
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
-import type { AssistantMessage } from "pi-stable-ai";
-import { ProcessTerminal, TUI } from "pi-stable-tui";
+import type { AssistantMessage } from "@earendil-works/pi-ai";
+import { ProcessTerminal, TUI } from "@earendil-works/pi-tui";
 import { fileURLToPath } from "url";
 import { AssistantMessageComponent } from "../src/modes/interactive/components/assistant-message.ts";
 import { initTheme } from "../src/modes/interactive/theme/theme.ts";

@@ -17,7 +17,7 @@
  */
 
 import { homedir } from "os";
-import type { ExtensionAPI } from "pi-stable";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
 	createBashTool,
 	createEditTool,
@@ -26,8 +26,8 @@ import {
 	createLsTool,
 	createReadTool,
 	createWriteTool,
-} from "pi-stable";
-import { Text } from "pi-stable-tui";
+} from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 
 /**
  * Shorten a path by replacing home directory with ~

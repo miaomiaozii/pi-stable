@@ -7,7 +7,7 @@ import type {
 	TextContent,
 	Transport,
 	Usage,
-} from "pi-stable-ai";
+} from "@earendil-works/pi-ai";
 import type { Static, TSchema } from "typebox";
 import type {
 	AgentEvent,

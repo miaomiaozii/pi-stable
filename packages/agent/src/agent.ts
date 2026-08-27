@@ -6,7 +6,7 @@ import type {
 	TextContent,
 	ThinkingBudgets,
 	Transport,
-} from "pi-stable-ai";
+} from "@earendil-works/pi-ai";
 import { runAgentLoop, runAgentLoopContinue } from "./agent-loop.ts";
 import { getDefaultStreamFn } from "./stream-fn.ts";
 import type {
