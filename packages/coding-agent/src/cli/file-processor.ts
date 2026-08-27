@@ -5,7 +5,7 @@
 import { access, readFile, stat } from "node:fs/promises";
 import chalk from "chalk";
 import { resolve } from "path";
-import type { ImageContent } from "@earendil-works/pi-ai";
+import type { ImageContent } from "pi-stable-ai";
 import { resolveReadPath } from "../core/tools/path-utils.ts";
 import { processImage } from "../utils/image-process.ts";
 import { detectSupportedImageMimeTypeFromFile } from "../utils/mime.ts";

@@ -7,10 +7,10 @@ import {
 	type Result,
 	Session,
 	type ShellExecOptions,
-} from "@earendil-works/pi-agent-core";
-import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
-import { createModels } from "@earendil-works/pi-ai";
-import { getModel } from "@earendil-works/pi-ai/compat";
+} from "pi-stable-agent-core";
+import { NodeExecutionEnv } from "pi-stable-agent-core/node";
+import { createModels } from "pi-stable-ai";
+import { getModel } from "pi-stable-ai/compat";
 import { Type } from "typebox";
 import { describe, expect, test, vi } from "vitest";
 import {

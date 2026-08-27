@@ -1,6 +1,6 @@
 {
-	"name": "@earendil-works/pi-telemetry",
-	"version": "0.84.3",
+	"name": "pi-stable-telemetry",
+	"version": "0.84.4",
 	"description": "Vendor-neutral telemetry contracts and typed schema utilities for pi",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -34,7 +34,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/earendil-works/pi.git",
+		"url": "git+https://github.com/miaomiaozii/pi-stable.git",
 		"directory": "packages/telemetry"
 	},
 	"engines": {

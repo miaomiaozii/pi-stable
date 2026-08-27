@@ -7,7 +7,7 @@ import {
 	type KeyId,
 	TUI_KEYBINDINGS,
 	KeybindingsManager as TuiKeybindingsManager,
-} from "@earendil-works/pi-tui";
+} from "pi-stable-tui";
 import { getAgentDir } from "../config.ts";
 import { stripBom } from "../utils/text.ts";
 
@@ -65,7 +65,7 @@ export function useWindowsKeybindings(
 	return platform === "win32" || (platform === "linux" && Boolean(env.WSL_DISTRO_NAME || env.WSL_INTEROP));
 }
 
-declare module "@earendil-works/pi-tui" {
+declare module "pi-stable-tui" {
 	interface Keybindings extends AppKeybindings {}
 }
 

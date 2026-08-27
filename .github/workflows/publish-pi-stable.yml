@@ -1,6 +1,6 @@
-name: Publish @earendil-works/pi-coding-agent
+name: Publish pi-stable
 
-# Publishes all 5 @earendil-works/pi-coding-agent-* packages in dependency order via scripts/publish.mjs.
+# Publishes all 5 pi-stable-* packages in dependency order via scripts/publish.mjs.
 # Triggers:
 #   1. push tag v*        -> builds and publishes
 #   2. workflow_dispatch  -> manual; defaults to dry-run (validate only).

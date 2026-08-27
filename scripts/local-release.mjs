@@ -6,15 +6,15 @@ import { isAbsolute, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const packages = [
-	{ directory: "packages/telemetry", name: "@earendil-works/pi-telemetry" },
-	{ directory: "packages/ai", name: "@earendil-works/pi-ai" },
-	{ directory: "packages/tui", name: "@earendil-works/pi-tui" },
-	{ directory: "packages/agent", name: "@earendil-works/pi-agent-core" },
-	{ directory: "packages/protocol", name: "@earendil-works/pi-protocol" },
-	{ directory: "packages/client", name: "@earendil-works/pi-client" },
-	{ directory: "packages/session-backends/sqlite-node", name: "@earendil-works/pi-session-backend-sqlite-node" },
-	{ directory: "packages/server", name: "@earendil-works/pi-server" },
-	{ directory: "packages/coding-agent", name: "@earendil-works/pi-coding-agent" },
+	{ directory: "packages/telemetry", name: "pi-stable-telemetry" },
+	{ directory: "packages/ai", name: "pi-stable-ai" },
+	{ directory: "packages/tui", name: "pi-stable-tui" },
+	{ directory: "packages/agent", name: "pi-stable-agent-core" },
+	{ directory: "packages/protocol", name: "pi-stable-protocol" },
+	{ directory: "packages/client", name: "pi-stable-client" },
+	{ directory: "packages/session-backends/sqlite-node", name: "pi-stable-session-backend-sqlite-node" },
+	{ directory: "packages/server", name: "pi-stable-server" },
+	{ directory: "packages/coding-agent", name: "pi-stable" },
 ];
 
 function printUsage() {

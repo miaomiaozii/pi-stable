@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import type { Component } from "@earendil-works/pi-tui";
+import type { Component } from "pi-stable-tui";
 import { describe, expect, it } from "vitest";
 import { ansiLinesToHtml } from "../src/core/export-html/ansi-to-html.ts";
 import { createToolHtmlRenderer } from "../src/core/export-html/tool-renderer.ts";
